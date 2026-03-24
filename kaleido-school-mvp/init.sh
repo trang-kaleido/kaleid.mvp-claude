@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# Kaleido MVP — Root Initialization Script
-# Runs the School app startup sequence
+# Kaleido School MVP - Initialization Script
+# Run this to install dependencies and start the dev server
 
 set -e
-
-cd "$(dirname "$0")/kaleido-school-mvp"
 
 echo "Installing dependencies..."
 npm install

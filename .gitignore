@@ -12,3 +12,15 @@ respondr-blueprint.md
 .env
 .env.local
 
+
+# macOS system files
+**/.DS_Store
+
+# macOS Finder duplicates ("X copy.md", "X copy/")
+*\ copy.md
+*\ copy/
+
+# Lab generated output (changes every pipeline run)
+kaleido-lab-mvp/outputs/
+
+kaleido-lab-mvp/lab-mvp-data-pipelines/pipeline_1_generator(ACTIVE).ipynb

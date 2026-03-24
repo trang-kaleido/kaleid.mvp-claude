@@ -1,0 +1,255 @@
+// Prisma Schema for Kaleido School MVP
+// Baselined from existing Supabase database + School-only additions
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// SCHOOL ENUMS (new - will be created on push)
+// =============================================================================
+
+// Progress status for each unit
+enum UnitStatus {
+  locked      // Student hasn't reached this unit yet
+  in_progress // Student is currently working on this unit
+  complete    // Student finished all phases (P0 -> P1 -> P2)
+}
+
+// Which phase the student should resume at within a unit
+enum CurrentPhase {
+  p0  // Cold Write (no peek, no scaffold)
+  p1  // Encoding (10 practices)
+  p2  // Applying (L4W essay write)
+}
+
+// Type of essay artifact submitted
+enum ArtifactType {
+  artifact_1     // P0 cold write essay
+  artifact_2     // P2 (L4W) post-encoding essay
+  free_practice  // Question Bank essay
+}
+
+// =============================================================================
+// LAB-WRITTEN TABLES (existing in DB - School reads only)
+// =============================================================================
+
+// PrepUnit: One learning unit with essay content and 12 practice exercises
+// Written by: Pipeline 3
+model PrepUnit {
+  unitId        String @id @map("unit_id") @db.Uuid
+  batchId       String @map("batch_id") @db.Uuid
+  question      String
+  structureType String @map("structure_type")
+  sentences     Json
+  practices     Json
+
+  // Relations to School tables
+  tierSequences       TierUnitSequence[]
+  studentUnitProgress StudentUnitProgress[]
+  studentAttempts     StudentAttempt[]
+
+  @@map("prep_unit")
+}
+
+// DirectionRef: Lookup table for argumentation directions
+// Written by: Pipeline 2
+model DirectionRef {
+  directionId String @id @map("direction_id")
+  argument    String
+
+  @@map("direction_ref")
+}
+
+// TierUnitSequence: Defines the order of units in each tier
+// Written by: Pipeline 2 (greedy algorithm)
+// NOTE: tier is String ("tier_50" or "tier_80") to match Lab's format
+model TierUnitSequence {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  batchId          String @map("batch_id") @db.Uuid
+  tier             String // "tier_50" or "tier_80"
+  sequencePosition Int    @map("sequence_position")
+  unitId           String @map("unit_id") @db.Uuid
+
+  // Relations
+  prepUnit PrepUnit @relation(fields: [unitId], references: [unitId])
+
+  @@unique([batchId, tier, sequencePosition])
+  @@unique([batchId, tier, unitId])
+  @@index([batchId, tier])
+  @@map("tier_unit_sequence")
+}
+
+// QBankUnlocks: Maps Q Bank questions to their unlock triggers
+// Written by: Pipeline 2
+model QBankUnlocks {
+  id                         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  batchId                    String @map("batch_id") @db.Uuid
+  tier                       String // "tier_50" or "tier_80"
+  questionId                 String @map("question_id") @db.Uuid
+  questionText               String @map("question_text")
+  unlockedBySequencePosition Int    @map("unlocked_by_sequence_position")
+  sharedDirections           Json   @default("[]") @map("shared_directions")
+
+  @@unique([batchId, tier, questionId])
+  @@index([batchId, tier])
+  @@map("qbank_unlocks")
+}
+
+// =============================================================================
+// LAB INTERMEDIATE TABLES (existing in DB - School ignores these)
+// Kept to avoid data loss; Lab pipelines may still use them
+// =============================================================================
+
+model essay_sentences {
+  id             String     @id @db.Uuid
+  essay_id       String?    @db.Uuid
+  sentence_id    String?    @db.Uuid
+  paragraph_type String?
+  order          Int?
+  created_at     DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?  @default(now()) @db.Timestamp(6)
+  essays         essays?    @relation(fields: [essay_id], references: [essay_id], onDelete: NoAction, onUpdate: NoAction)
+  sentences      sentences? @relation(fields: [sentence_id], references: [sentence_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model essays {
+  essay_id        String            @id @db.Uuid
+  question        String?
+  structure_type  String?
+  word_count      Int?
+  batch_id        String?           @db.Uuid
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  essay_sentences essay_sentences[]
+}
+
+model lexical_items {
+  lexical_id  String                 @id @db.Uuid
+  sentence_id String?                @db.Uuid
+  phrase      String?
+  embedding   Unsupported("vector")?
+  created_at  DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at  DateTime?              @default(now()) @db.Timestamp(6)
+  sentences   sentences?             @relation(fields: [sentence_id], references: [sentence_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sentence_syntax {
+  id           String        @id @db.Uuid
+  sentence_id  String?       @db.Uuid
+  syntax_id    String?       @db.Uuid
+  created_at   DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at   DateTime?     @default(now()) @db.Timestamp(6)
+  sentences    sentences?    @relation(fields: [sentence_id], references: [sentence_id], onDelete: NoAction, onUpdate: NoAction)
+  syntax_items syntax_items? @relation(fields: [syntax_id], references: [syntax_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model sentences {
+  sentence_id     String                 @id @db.Uuid
+  canonical_text  String?
+  embedding       Unsupported("vector")?
+  rhetoric_tag    String?
+  direction_tag   String?
+  word_count      Int?
+  batch_id        String?                @db.Uuid
+  created_at      DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?              @default(now()) @db.Timestamp(6)
+  essay_sentences essay_sentences[]
+  lexical_items   lexical_items[]
+  sentence_syntax sentence_syntax[]
+}
+
+model syntax_items {
+  syntax_id       String                 @id @db.Uuid
+  pattern         String?
+  embedding       Unsupported("vector")?
+  created_at      DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?              @default(now()) @db.Timestamp(6)
+  sentence_syntax sentence_syntax[]
+}
+
+// =============================================================================
+// SCHOOL-WRITTEN TABLES (new - will be created on push)
+// =============================================================================
+
+// Teacher: Educator accounts linked to Clerk
+// Created when: Teacher signs up
+model Teacher {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clerkUserId String   @unique @map("clerk_user_id")
+  teacherCode String   @unique @map("teacher_code")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("teacher")
+}
+
+// StudentPath: Student's learning path assignment (locked at onboarding)
+// Created when: Student completes onboarding (tier selection + teacher code)
+model StudentPath {
+  studentId               String   @id @default(dbgenerated("gen_random_uuid()")) @map("student_id") @db.Uuid
+  clerkUserId             String   @unique @map("clerk_user_id")
+  teacherCode             String   @map("teacher_code")
+  tier                    String   // "tier_50" or "tier_80" (permanent choice)
+  batchId                 String   @map("batch_id") @db.Uuid
+  currentSequencePosition Int?     @map("current_sequence_position")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  unitProgress StudentUnitProgress[]
+  attempts     StudentAttempt[]
+
+  @@index([teacherCode])
+  @@map("student_path")
+}
+
+// StudentUnitProgress: Tracks completion state per unit
+// Created when: Student is assigned a path (one row per unit in their tier)
+model StudentUnitProgress {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId    String       @map("student_id") @db.Uuid
+  unitId       String       @map("unit_id") @db.Uuid
+  status       UnitStatus   @default(locked)
+  currentPhase CurrentPhase @default(p0) @map("current_phase")
+  startedAt    DateTime?    @map("started_at")
+  completedAt  DateTime?    @map("completed_at")
+
+  // Relations
+  student  StudentPath @relation(fields: [studentId], references: [studentId])
+  prepUnit PrepUnit    @relation(fields: [unitId], references: [unitId])
+
+  @@unique([studentId, unitId])
+  @@index([studentId])
+  @@map("student_unit_progress")
+}
+
+// StudentAttempt: Append-only log of every practice attempt
+// Created when: Student submits any practice item
+model StudentAttempt {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId       String        @map("student_id") @db.Uuid
+  unitId          String?       @map("unit_id") @db.Uuid
+  qbankQuestionId String?       @map("qbank_question_id") @db.Uuid
+  practiceCode    String        @map("practice_code")
+  itemId          String        @map("item_id")
+  version         String?
+  response        Json
+  pass            Boolean?
+  failedAdvanced  Boolean?      @map("failed_advanced")
+  startedAt       DateTime      @map("started_at")
+  completedAt     DateTime      @map("completed_at")
+  artifactType    ArtifactType? @map("artifact_type")
+  artifactContent String?       @map("artifact_content")
+
+  // Relations
+  student  StudentPath @relation(fields: [studentId], references: [studentId])
+  prepUnit PrepUnit?   @relation(fields: [unitId], references: [unitId])
+
+  @@index([studentId])
+  @@index([unitId])
+  @@map("student_attempt")
+}

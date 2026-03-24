@@ -1,0 +1,214 @@
+/**
+ * Onboarding Screen 2 — Teacher Code Entry
+ *
+ * The student enters their teacher's code to link their account.
+ *
+ * On submit this route does ALL the database writes for onboarding,
+ * wrapped in a single Prisma $transaction so they succeed or fail together:
+ *   1. Create StudentPath (tier + teacher_code + batch_id locked here)
+ *   2. Create one StudentUnitProgress row per unit in the tier
+ *      — first unit: status=in_progress, currentPhase=p0
+ *      — all others: status=locked (currentPhase defaults to p0 anyway)
+ *
+ * The tier comes from the URL parameter set in screen 1
+ * (e.g. /onboarding/teacher-code?tier=tier_50).
+ */
+import { redirect } from "react-router";
+import { Form, useActionData, useLoaderData } from "react-router";
+import { getAuth } from "@clerk/react-router/server";
+import { z } from "zod";
+import { prisma } from "~/lib/prisma.server";
+import type { Route } from "./+types/onboarding.teacher-code";
+
+// ─── Validation schemas ─────────────────────────────────────────────────────
+// Validates the tier value arriving in the URL — same two valid values as screen 1
+const TierSchema = z.enum(["tier_50", "tier_80"]);
+
+// Validates the teacher code: 6 uppercase alphanumeric characters.
+// This is a format check only — we also verify the code exists in the DB below.
+const TeacherCodeSchema = z.string().min(1, "Teacher code is required.");
+
+// ─── Loader ─────────────────────────────────────────────────────────────────
+// Runs on GET — checks auth, checks for existing path, reads tier from URL
+export async function loader(args: Route.LoaderArgs) {
+  const { userId } = await getAuth(args);
+
+  if (!userId) {
+    throw redirect("/sign-in");
+  }
+
+  // Duplicate guard: if already onboarded, skip to dashboard
+  const existingPath = await prisma.studentPath.findUnique({
+    where: { clerkUserId: userId },
+  });
+
+  if (existingPath) {
+    throw redirect("/dashboard");
+  }
+
+  // Read tier from URL — e.g. ?tier=tier_50
+  const url = new URL(args.request.url);
+  const tierRaw = url.searchParams.get("tier");
+
+  // Validate it — if someone navigated here manually with a bad URL, go back to step 1
+  const tierResult = TierSchema.safeParse(tierRaw);
+  if (!tierResult.success) {
+    throw redirect("/onboarding/tier");
+  }
+
+  // Pass tier to the UI so it can embed it in the form as a hidden field
+  return { tier: tierResult.data };
+}
+
+// ─── Action ─────────────────────────────────────────────────────────────────
+// Runs on POST (form submission) — validates, then writes all records atomically
+export async function action(args: Route.ActionArgs) {
+  const { userId } = await getAuth(args);
+
+  if (!userId) {
+    throw redirect("/sign-in");
+  }
+
+  const formData = await args.request.formData();
+
+  // Read both fields from the submitted form
+  const tierRaw = formData.get("tier");
+  const teacherCodeRaw = formData.get("teacherCode");
+
+  // Validate tier (came from hidden field — should always be valid, but check anyway)
+  const tierResult = TierSchema.safeParse(tierRaw);
+  if (!tierResult.success) {
+    throw redirect("/onboarding/tier");
+  }
+  const tier = tierResult.data;
+
+  // Validate teacher code format
+  const codeResult = TeacherCodeSchema.safeParse(teacherCodeRaw);
+  if (!codeResult.success) {
+    // Zod v4: error details are in .issues[] not .errors[]
+    return { error: codeResult.error.issues[0].message };
+  }
+  const teacherCode = codeResult.data;
+
+  // ── DB lookup: verify teacher code exists in Teacher table (task 5.2.11) ──
+  // This confirms the code was actually issued by us, not typed randomly.
+  const teacher = await prisma.teacher.findUnique({
+    where: { teacherCode },
+  });
+
+  if (!teacher) {
+    // Return error to form — do NOT redirect (task 5.2.12)
+    return { error: "Teacher code not found. Please check with your teacher." };
+  }
+
+  // ── Get the current batch_id and ordered unit list (tasks 5.2.5, 5.2.8) ──
+  // TierUnitSequence holds the Lab's ordered unit list for each tier.
+  // We query it sorted by sequencePosition so the order is correct.
+  // For MVP there is one batch — we take the batchId from the first row.
+  const tierSequence = await prisma.tierUnitSequence.findMany({
+    where: { tier },
+    orderBy: { sequencePosition: "asc" },
+  });
+
+  if (tierSequence.length === 0) {
+    // This would only happen if the Lab pipeline hasn't been run yet
+    return { error: "Content not yet available. Please contact your teacher." };
+  }
+
+  // The batch_id is the same for all rows — take it from the first
+  const batchId = tierSequence[0].batchId;
+
+  // ── Atomic transaction: all writes succeed or all roll back (task 5.2.6) ──
+  // If StudentPath is created but the unit progress loop fails halfway,
+  // Prisma rolls back everything — no orphaned StudentPath with partial units.
+  await prisma.$transaction(async (tx) => {
+
+    // Task 5.2.7 — Create StudentPath
+    // studentId is auto-generated by the DB (gen_random_uuid())
+    const path = await tx.studentPath.create({
+      data: {
+        clerkUserId: userId,
+        teacherCode,
+        tier,
+        batchId,
+        currentSequencePosition: 1, // Start at unit 1 (task 5.2.9)
+      },
+    });
+
+    // Task 5.2.8 — Create one StudentUnitProgress row per unit in this tier
+    // createMany inserts all rows in a single SQL statement (efficient)
+    await tx.studentUnitProgress.createMany({
+      data: tierSequence.map((row, index) => ({
+        studentId: path.studentId,
+        unitId: row.unitId,
+        // Only the first unit (index 0) is unlocked — the rest stay locked
+        // currentPhase defaults to p0 for all rows (set in Prisma schema)
+        status: index === 0 ? ("in_progress" as const) : ("locked" as const),
+      })),
+    });
+  });
+
+  // All DB writes succeeded — go to the confirmation screen
+  throw redirect("/onboarding/complete");
+}
+
+// ─── UI ─────────────────────────────────────────────────────────────────────
+export default function OnboardingTeacherCode() {
+  const actionData = useActionData<typeof action>();
+
+  // loaderData.tier is the tier the student selected on screen 1.
+  // We embed it as a hidden form field so the action() can read it.
+  const loaderData = useLoaderData<typeof loader>();
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="max-w-md w-full">
+        <h1 className="text-3xl font-bold text-center mb-2">
+          Enter your teacher code
+        </h1>
+        <p className="text-gray-600 text-center mb-8">
+          Your teacher will have given you a unique code to link your account to
+          their class.
+        </p>
+
+        <Form method="post">
+          {/*
+            Hidden field — carries the tier from screen 1 through to the action.
+            The user never sees or touches this.
+          */}
+          <input type="hidden" name="tier" value={loaderData.tier} />
+
+          <div className="mb-4">
+            <label
+              htmlFor="teacherCode"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Teacher code
+            </label>
+            <input
+              id="teacherCode"
+              name="teacherCode"
+              type="text"
+              required
+              autoComplete="off"
+              placeholder="e.g. ABC123"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Inline error — shown if code is invalid or not found (task 5.2.12) */}
+          {actionData?.error && (
+            <p className="text-red-500 text-sm mb-4">{actionData.error}</p>
+          )}
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Start learning →
+          </button>
+        </Form>
+      </div>
+    </div>
+  );
+}
