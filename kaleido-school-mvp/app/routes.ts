@@ -8,7 +8,8 @@ export default [
   route("sign-in", "routes/sign-in.tsx"),
   route("sign-up", "routes/sign-up.tsx"),
 
-  // Onboarding flow — 3 screens (F04)
+  // Onboarding flow — 4 screens (F04): intro → tier → teacher-code → complete
+  route("onboarding/intro", "routes/onboarding.intro.tsx"),
   route("onboarding/tier", "routes/onboarding.tier.tsx"),
   route("onboarding/teacher-code", "routes/onboarding.teacher-code.tsx"),
   route("onboarding/complete", "routes/onboarding.complete.tsx"),
@@ -16,10 +17,20 @@ export default [
   // Student dashboard — unit list + Question Bank entry (F05)
   route("dashboard", "routes/dashboard.tsx"),
 
-  // Study unit routes — phase router + P0 cold write (F06) + P1 encoding (F08) + P2 applying (F11)
+  // Study unit routes — phase router (F06)
   route("unit/:unitId", "routes/unit.$unitId.tsx"),
+
+  // P0 — Cold Write (F06)
+  route("unit/:unitId/p0/intro", "routes/unit.$unitId.p0.intro.tsx"),
   route("unit/:unitId/p0", "routes/unit.$unitId.p0.tsx"),
-  route("unit/:unitId/p1", "routes/unit.$unitId.p1.tsx"),
+
+  // P1 — Encoding: three sub-routes (F16, F17, F08)
+  route("unit/:unitId/p1/pov-intro", "routes/unit.$unitId.p1.pov-intro.tsx"),
+  route("unit/:unitId/p1/pov-encoding", "routes/unit.$unitId.p1.pov-encoding.tsx"),
+  route("unit/:unitId/p1/essay-encoding", "routes/unit.$unitId.p1.essay-encoding.tsx"),
+
+  // P2 — Applying (F11)
+  route("unit/:unitId/p2/intro", "routes/unit.$unitId.p2.intro.tsx"),
   route("unit/:unitId/p2", "routes/unit.$unitId.p2.tsx"),
 
   // Unit completion screens (F12)

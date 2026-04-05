@@ -86,9 +86,23 @@ export default function OnboardingTier() {
         <h1 className="text-3xl font-bold text-center mb-2">
           Choose your learning path
         </h1>
-        <p className="text-gray-600 text-center mb-8">
-          This determines how many writing units you'll work through.
-        </p>
+
+        {/* Guiding content */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4 mb-6 flex flex-col gap-2">
+          <p className="text-sm text-gray-700 leading-relaxed">
+            In this pilot product, we offer you two options:
+          </p>
+          <ul className="flex flex-col gap-1.5 pl-3">
+            <li className="text-sm text-gray-700 leading-relaxed">
+              — <span className="font-medium">Option A:</span> Study 11 prep units, each ~1 hour,
+              to be ready for 50% of IELTS questions. Choose this if you have 4 weeks × 4 hours/week.
+            </li>
+            <li className="text-sm text-gray-700 leading-relaxed">
+              — <span className="font-medium">Option B:</span> Study 25 prep units, each ~1 hour,
+              to be ready for 80% of IELTS questions. Choose this if you have 10 weeks × 4 hours/week.
+            </li>
+          </ul>
+        </div>
 
         {/* Form method="post" sends data to our action() above */}
         <Form method="post">
@@ -103,10 +117,9 @@ export default function OnboardingTier() {
                 className="sr-only peer" // sr-only = visually hidden but accessible
               />
               <div className="border-2 border-gray-200 rounded-xl p-6 peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:border-gray-300 transition-colors">
-                <div className="text-2xl font-bold mb-2">50 Units</div>
+                <div className="text-2xl font-bold mb-2">Option A — 11 Units</div>
                 <div className="text-gray-600 text-sm">
-                  A focused path covering core writing patterns. Ideal if your
-                  exam is within the next few months.
+                  ~4 weeks × 4 hours/week. Ready for 50% of IELTS questions.
                 </div>
               </div>
             </label>
@@ -120,10 +133,9 @@ export default function OnboardingTier() {
                 className="sr-only peer"
               />
               <div className="border-2 border-gray-200 rounded-xl p-6 peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:border-gray-300 transition-colors">
-                <div className="text-2xl font-bold mb-2">80 Units</div>
+                <div className="text-2xl font-bold mb-2">Option B — 25 Units</div>
                 <div className="text-gray-600 text-sm">
-                  A comprehensive path covering a wider range of writing
-                  patterns. Ideal for longer preparation.
+                  ~10 weeks × 4 hours/week. Ready for 80% of IELTS questions.
                 </div>
               </div>
             </label>

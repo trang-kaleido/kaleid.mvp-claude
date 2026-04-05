@@ -28,12 +28,18 @@ import { GradingService } from "~/services/grading.server";
 /**
  * MCQQuestion — one question item within a version.
  * Matches LAB-SCHOOL-CONTRACT §7.3 MCQQuestion interface.
+ *
+ * `context` is a string block rendered above the prompt:
+ *   - L3M_POV: the full paragraph text the student should identify
+ *   - L2M_POV: the PoV argument + logic text (multiline)
+ *   - L4M/L2M/L1M: supporting sentence or paragraph block
  */
 interface MCQQuestion {
-  id: string;           // e.g. "L4M-1"
-  prompt: string;       // the question stem (same in V1 and V2)
-  options: string[];    // 5 option strings (different between V1 and V2)
-  correct_index: number; // 0-based index of the correct option
+  id: string;             // e.g. "L4M-1"
+  prompt: string;         // the question stem (same in V1 and V2)
+  context?: string;       // optional supporting text rendered above the prompt
+  options: string[];      // 5 option strings (different between V1 and V2)
+  correct_index: number;  // 0-based index of the correct option
 }
 
 /**
@@ -41,7 +47,7 @@ interface MCQQuestion {
  * Matches LAB-SCHOOL-CONTRACT §7.3 PracticeMCQ interface.
  */
 export interface PracticeMCQ {
-  practice_code: "L4M" | "L3M" | "L2M" | "L1M";
+  practice_code: "L4M" | "L3M" | "L2M" | "L1M" | "L3M_POV" | "L2M_POV";
   versions: [
     { version: "V1"; questions: MCQQuestion[] },
     { version: "V2"; questions: MCQQuestion[] },
@@ -257,6 +263,19 @@ export function MCQPractice({ practice, onComplete, isPaused = false }: MCQPract
       <p className="text-sm text-gray-500">
         Question {questionIndex + 1} of {totalQuestions}
       </p>
+
+      {/* ── Context block (optional) ───────────────────────────────────── */}
+      {/* Shown above the prompt when the Lab includes supporting text. */}
+      {currentQuestion.context && (
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-2">
+            Context
+          </p>
+          <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-line">
+            {currentQuestion.context}
+          </p>
+        </div>
+      )}
 
       {/* ── Question prompt ────────────────────────────────────────────── */}
       <div className="rounded-lg border border-gray-200 bg-white p-4">

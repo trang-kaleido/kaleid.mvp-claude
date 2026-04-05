@@ -57,10 +57,10 @@ export async function loader(args: Route.LoaderArgs) {
     throw redirect("/dashboard");
   }
 
-  // If the student is past P0, redirect them to the correct phase.
+  // If the student is past P0, send them through the phase router to the right place.
   // (They might have bookmarked this URL or navigated back in the browser.)
   if (progress.currentPhase !== "p0") {
-    throw redirect(`/unit/${unitId}/${progress.currentPhase}`);
+    throw redirect(`/unit/${unitId}`);
   }
 
   // Fetch just the question text — we don't need the large JSONB blobs here.
@@ -122,8 +122,9 @@ export async function action(args: Route.ActionArgs) {
     result.data.essay
   );
 
-  // Redirect to P1. Until F07 is built, this will 404 — that's expected.
-  throw redirect(`/unit/${unitId}/p1`);
+  // Redirect through the phase router — completeP0 advanced the phase to
+  // p1_pov_intro, so the router will land the student on /p1/pov-intro.
+  throw redirect(`/unit/${unitId}`);
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────

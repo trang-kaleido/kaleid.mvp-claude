@@ -6,9 +6,12 @@
  * The actual database writes (which involve transactions across multiple tables)
  * live here so they can be tested independently and reused by future routes.
  *
- * `completeP0` handles the cold write phase.
- * `completeP1` handles phase advancement after the 10 encoding practices (F08).
- * P2 transition is deferred to a later feature.
+ * Phase flow:
+ *   completeP0           → p0 → p1_pov_intro
+ *   completePovIntro     → p1_pov_intro → p1_pov_encoding
+ *   completePovEncoding  → p1_pov_encoding → p1_essay_encoding
+ *   completeEssayEncoding → p1_essay_encoding → p2
+ *   completeP2           → unit complete, next unit unlocked
  */
 import { prisma } from "~/lib/prisma.server";
 
@@ -76,7 +79,7 @@ export const PhaseTransitionService = {
         },
       }),
 
-      // Write 2: Advance the phase from p0 → p1.
+      // Write 2: Advance the phase from p0 → p1_pov_intro.
       // StudentUnitProgress has a composite unique key: (studentId, unitId).
       // `update` is safe here because the loader already confirmed the row exists.
       prisma.studentUnitProgress.update({
@@ -84,28 +87,19 @@ export const PhaseTransitionService = {
           studentId_unitId: { studentId, unitId },
         },
         data: {
-          currentPhase: "p1",
+          currentPhase: "p1_pov_intro",
         },
       }),
     ]);
   },
 
   /**
-   * completeP1 — called after the student finishes all 10 encoding practices.
+   * completePovIntro — called when the student taps the CTA on the PoV Intro screen.
    *
-   * Does ONE thing: advances StudentUnitProgress.currentPhase from 'p1' → 'p2'.
-   *
-   * WHY no artifact here?
-   * P1 has no output artifact — it's a pure encoding practice.
-   * Only P0 (cold essay = Artifact 1) and P2 (post-encoding essay = Artifact 2)
-   * write artifacts. P1 just advances the phase.
-   *
-   * @param clerkUserId - The Clerk user ID string (from `requireStudent`)
-   * @param unitId      - UUID of the prep unit being completed
+   * Advances StudentUnitProgress.currentPhase from 'p1_pov_intro' → 'p1_pov_encoding'.
+   * No artifact written — POV_INTRO has no pass tracking.
    */
-  async completeP1(clerkUserId: string, unitId: string): Promise<void> {
-    // Step 1: Look up the StudentPath to get the internal studentId (UUID).
-    // Same pattern as completeP0 — we always receive a clerkUserId from auth.
+  async completePovIntro(clerkUserId: string, unitId: string): Promise<void> {
     const path = await prisma.studentPath.findUnique({
       where: { clerkUserId },
       select: { studentId: true },
@@ -115,19 +109,59 @@ export const PhaseTransitionService = {
       throw new Error(`No StudentPath found for clerkUserId: ${clerkUserId}`);
     }
 
-    const { studentId } = path;
-
-    // Step 2: Update the phase from p1 → p2.
-    // Using a transaction here for consistency with completeP0, even though
-    // there's only one write — makes it easier to add atomic operations later.
     await prisma.$transaction([
       prisma.studentUnitProgress.update({
-        where: {
-          studentId_unitId: { studentId, unitId },
-        },
-        data: {
-          currentPhase: "p2",
-        },
+        where: { studentId_unitId: { studentId: path.studentId, unitId } },
+        data: { currentPhase: "p1_pov_encoding" },
+      }),
+    ]);
+  },
+
+  /**
+   * completePovEncoding — called when the student finishes L2M_POV (the last
+   * practice in pov-encoding).
+   *
+   * Advances StudentUnitProgress.currentPhase from 'p1_pov_encoding' → 'p1_essay_encoding'.
+   */
+  async completePovEncoding(clerkUserId: string, unitId: string): Promise<void> {
+    const path = await prisma.studentPath.findUnique({
+      where: { clerkUserId },
+      select: { studentId: true },
+    });
+
+    if (!path) {
+      throw new Error(`No StudentPath found for clerkUserId: ${clerkUserId}`);
+    }
+
+    await prisma.$transaction([
+      prisma.studentUnitProgress.update({
+        where: { studentId_unitId: { studentId: path.studentId, unitId } },
+        data: { currentPhase: "p1_essay_encoding" },
+      }),
+    ]);
+  },
+
+  /**
+   * completeEssayEncoding — called after the student finishes all 9 essay encoding
+   * practices (indices 4–12 in the practices array).
+   *
+   * Advances StudentUnitProgress.currentPhase from 'p1_essay_encoding' → 'p2'.
+   * No artifact written — encoding practices are pure practice.
+   */
+  async completeEssayEncoding(clerkUserId: string, unitId: string): Promise<void> {
+    const path = await prisma.studentPath.findUnique({
+      where: { clerkUserId },
+      select: { studentId: true },
+    });
+
+    if (!path) {
+      throw new Error(`No StudentPath found for clerkUserId: ${clerkUserId}`);
+    }
+
+    await prisma.$transaction([
+      prisma.studentUnitProgress.update({
+        where: { studentId_unitId: { studentId: path.studentId, unitId } },
+        data: { currentPhase: "p2" },
       }),
     ]);
   },

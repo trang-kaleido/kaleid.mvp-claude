@@ -1,6 +1,6 @@
 {
   "project": "kaleido-school-mvp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "features": [
     {
       "id": "F00",
@@ -12,84 +12,84 @@
     {
       "id": "F01",
       "name": "Database schema",
-      "description": "Supabase PostgreSQL + Prisma ORM. Prisma datasource needs two URLs: DATABASE_URL (Connection Pooler, port 6543) and DIRECT_URL (direct connection, port 5432 — required for migrations). 8 Prisma models: PrepUnit, TierUnitSequence, QBankUnlocks, DirectionRef, Teacher, StudentPath, StudentUnitProgress, StudentAttempt. Teacher: clerkUserId + teacherCode for EC auth. StudentPath: clerkUserId for Clerk link, no exam_date. StudentAttempt: one row per item-attempt (fine granularity). StudentUnitProgress: current_phase enum = p0 / p1 / p2. Note: direction_ref and qbank_unlocks have no FKs by design (lookup table and denormalized Q Bank questions).",
-      "passes": true,
+      "description": "Supabase PostgreSQL + Prisma ORM. Prisma datasource needs two URLs: DATABASE_URL (Connection Pooler, port 6543) and DIRECT_URL (direct connection, port 5432 — required for migrations). 8 Prisma models: PrepUnit, TierUnitSequence, QBankUnlocks, DirectionRef, Teacher, StudentPath, StudentUnitProgress, StudentAttempt. Teacher: clerkUserId + teacherCode for EC auth. StudentPath: clerkUserId for Clerk link, no exam_date. StudentAttempt: one row per item-attempt (fine granularity). StudentUnitProgress: current_phase enum = p0 / p1 (deprecated) / p1_pov_intro / p1_pov_encoding / p1_essay_encoding / p2. Note: p1 is kept as a deprecated enum value — PostgreSQL cannot drop enum values. New code never writes p1. Note: direction_ref and qbank_unlocks have no FKs by design (lookup table and denormalized Q Bank questions).",
+      "passes": false,
       "test_command": "npx prisma validate"
     },
     {
       "id": "F02",
       "name": "Clerk auth integration",
-      "description": "Email/password + OAuth, session management, webhook for DB sync",
+      "description": "Email/password + OAuth, session management, webhook for DB sync. Sign-up redirects to /onboarding/intro via afterSignUpUrl prop on <SignUp /> component.",
       "passes": true,
       "test_command": "npm run typecheck"
     },
     {
       "id": "F03",
       "name": "Data ingestion",
-      "description": "Import prep-unit JSON from Lab, write verbatim to PrepUnit, TierUnitSequence, QBankUnlocks, and DirectionRef tables (all 4 Lab-written tables). Pure write — no transformation or logic.",
+      "description": "Import prep-unit JSON from Lab, write verbatim to PrepUnit, TierUnitSequence, QBankUnlocks, and DirectionRef tables (all 4 Lab-written tables). Pure write — no transformation or logic. practices array is now 14 items (was 12).",
       "passes": true,
       "test_command": "npm test -- ingestion"
     },
     {
       "id": "F04",
       "name": "Onboarding flow",
-      "description": "Tier selection (50/80 units), teacher code entry, path assignment + content_version lock. No exam date.",
-      "passes": true,
+      "description": "4-screen flow: (1) /onboarding/intro — methodology explainer + tier guidance, CTA to tier selection; (2) /onboarding/tier — tier selection (50/80 units); (3) /onboarding/teacher-code — teacher code entry; (4) /onboarding/complete — how-to-study explainer, path assignment + content_version lock. No exam date. Duplicate-onboarding guard on each screen (redirect to /dashboard if StudentPath already exists).",
+      "passes": false,
       "test_command": "npm test -- onboarding"
     },
     {
       "id": "F05",
       "name": "Dashboard",
-      "description": "Student home: unit list (locked/in-progress/complete) + Question Bank entry point. Path complete state when all units done.",
+      "description": "Student home: unit list (locked/in-progress/complete) + Question Bank entry point. Path complete state when all units done. Includes guiding content banner explaining the 3-step unit flow.",
       "passes": true,
       "test_command": "npm test -- path"
     },
     {
       "id": "F06",
       "name": "P0 — Cold essay",
-      "description": "L4W cold write on model essay question. 40-min countdown. No scaffold, no peek. Artifact 1 sent to EC immediately on submit. Save point.",
-      "passes": true,
+      "description": "Two screens: (1) /unit/:unitId/p0/intro — phase entry screen with guiding content + question preview, CTA links to p0 write (no phase change); (2) /unit/:unitId/p0 — L4W cold write on model essay question, 40-min countdown, no scaffold, no peek. Artifact 1 sent to EC on submit. Save point: currentPhase advances to p1_pov_intro on submit.",
+      "passes": false,
       "test_command": "npm test -- practice0"
     },
     {
       "id": "F07",
       "name": "Peek modal component",
-      "description": "Reusable modal showing: essay text (colour-coded by lexical type), PoV cards (human-readable direction label, summary, topic sentence, blog link), lexical items panel. Available throughout all of P1 (L4M through L2F) with no rate limit. Not available in P0, P2 L4W, or Question Bank.",
+      "description": "Reusable modal showing: essay text (colour-coded by lexical type), PoV cards (human-readable direction label, summary, topic sentence, blog link), lexical items panel. Available throughout PoV Encoding (F16) and Essay Encoding (F08) with no rate limit. Not available in P0, PoV Intro (F16a), P2 L4W, or Question Bank.",
       "passes": true,
       "test_command": "npm test -- peek"
     },
     {
       "id": "F08",
-      "name": "MCQ practices",
-      "description": "L4M, L3M, L2M, L1M. One question at a time, 5 options. Peek available (no rate limit). Pattern A per-item retry: wrong answer shows red X indicator (no correct answer revealed), V2 auto-loads immediately. Retry cycle: V1 → V2 → V1 (2 distractor sets only). After 3 failures: forced advance, failed_advanced: true on that item.",
-      "passes": true,
+      "name": "MCQ practices — Essay Encoding",
+      "description": "L4M, L2M, L1M (practices array indices 4, 5, 6). L3M retired — replaced by L3M_POV in F16b. One question at a time, 5 options. Peek available (no rate limit). Pattern A per-item retry: wrong answer shows red X indicator (no correct answer revealed), V2 auto-loads immediately. Retry cycle: V1 → V2 → V1. After 3 failures: forced advance, failed_advanced: true on that item. Lives in /unit/:unitId/p1/essay-encoding.",
+      "passes": false,
       "test_command": "npm test -- mcq"
     },
     {
       "id": "F09",
       "name": "Scramble practices",
-      "description": "L1S/L2S click-to-place word bank. L3S/L4S drag-to-order. Peek available. Pattern A per-arrangement retry. Same items reload on retry. After 3 failures: forced advance.",
+      "description": "L1S/L2S click-to-place word bank. L3S/L4S drag-to-order. Peek available. Pattern A per-arrangement retry. Same items reload on retry. After 3 failures: forced advance. Lives in /unit/:unitId/p1/essay-encoding (practices array indices 7–10).",
       "passes": true,
       "test_command": "npm test -- scramble"
     },
     {
       "id": "F10",
       "name": "Fill practices",
-      "description": "L1F: POS hints + similar_phrases always visible, no word bank, case-insensitive match, peek available, Pattern A per-section retry. L2F: hint_sentences visible, no pass/fail, always advances on submit, output silently discarded, no retry versions. Both are the 9th and 10th practices of P1.",
+      "description": "L1F (index 11): POS hints + similar_phrases always visible, no word bank, case-insensitive match, peek available, Pattern A per-section retry. L2F (index 12): hint_sentences visible, no pass/fail, always advances on submit, output silently discarded, no retry versions. Both live in /unit/:unitId/p1/essay-encoding.",
       "passes": true,
       "test_command": "npm test -- fill"
     },
     {
       "id": "F11",
       "name": "P2 — Applying write",
-      "description": "L4W on model essay question (same as P0). Collapsible: lexical items panel, syntax patterns panel. No peek. 40-min countdown. No pass/fail — always advances. Submission = unit gate. Artifact 2 sent to EC. Save point.",
-      "passes": true,
+      "description": "Two screens: (1) /unit/:unitId/p2/intro — phase entry screen with guiding content, CTA links to p2 write (no phase change); (2) /unit/:unitId/p2 — L4W on model essay question (same as P0), collapsible lexical items panel + syntax patterns panel, no peek, 40-min countdown, no pass/fail — always advances. Submission = unit gate. Artifact 2 sent to EC. Save point.",
+      "passes": false,
       "test_command": "npm test -- write"
     },
     {
       "id": "F12",
       "name": "Unit completion",
-      "description": "Unit complete screen after L4W submit. Next unit unlocks (or path complete screen if last unit). Q Bank unlock notification: show which new questions were added. Buttons: Go to Question Bank / Next Unit.",
+      "description": "Unit complete screen after L4W submit. Next unit unlocks (or path complete screen if last unit). Q Bank unlock notification: show which new questions were added. Buttons: Go to Question Bank / Next Unit. Includes guiding content about Q Bank availability.",
       "passes": true,
       "test_command": "npm test -- completion"
     },
@@ -113,7 +113,21 @@
       "description": "Rate limiting, bot detection, XSS/SQLi shield",
       "passes": false,
       "test_command": "npm test -- security"
+    },
+    {
+      "id": "F16",
+      "name": "PoV Introduction Screen",
+      "description": "New route /unit/:unitId/p1/pov-intro. Renders POV_INTRO practice (practices array index 1). One PoV card per direction in essay: argument as heading, logic as body, Dive Deep button linked to blog_url (disabled/greyed when null). No questions, no timer, no Peek. CTA: 'I have understood these PoVs — ready to study the essay' → action advances currentPhase to p1_pov_encoding. No StudentAttempt rows written (POV_INTRO has no pass tracking). Guiding content shown above cards.",
+      "passes": true,
+      "test_command": "npm run typecheck"
+    },
+    {
+      "id": "F17",
+      "name": "PoV Encoding sub-route",
+      "description": "New route /unit/:unitId/p1/pov-encoding. Renders L3M_POV (index 2) then L2M_POV (index 3) in sequence. Two-stage component: (1) reading_essay stage — full model essay shown inline as mandatory reading block before questions unlock, CTA to advance; (2) practice stage — MCQPractice component renders L3M_POV questions then L2M_POV questions sequentially. StopwatchTimer and Peek modal available during practice stage. On completion: currentPhase advances to p1_essay_encoding. StudentAttempt rows written per item.",
+      "passes": true,
+      "test_command": "npm run typecheck"
     }
   ],
-  "next_feature": "F15"
+  "next_feature": "F16"
 }

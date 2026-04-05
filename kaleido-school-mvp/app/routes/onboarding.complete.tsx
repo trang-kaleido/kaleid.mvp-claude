@@ -39,11 +39,27 @@ export default function OnboardingComplete() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full text-center">
         <div className="text-5xl mb-6">✓</div>
-        <h1 className="text-3xl font-bold mb-4">You're all set</h1>
-        <p className="text-gray-600 mb-8">
-          Your learning path has been assigned. You can start your first unit
-          whenever you're ready.
-        </p>
+        <h1 className="text-3xl font-bold mb-4">You&apos;re all set</h1>
+
+        {/* Guiding content */}
+        <div className="rounded-lg border border-gray-200 bg-white p-5 text-left flex flex-col gap-3 mb-6">
+          <h2 className="text-sm font-semibold text-gray-900">
+            How to study IELTS Writing Task 2 with Kaleido
+          </h2>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            The core idea of studying with Kaleido is not about answering some questions because
+            you will see a different one in the test room.
+          </p>
+          <p className="text-sm font-medium text-gray-900 leading-relaxed">
+            The point here is to understand selected PoVs via selected questions and how to
+            apply them to answer many others.
+          </p>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Note: We also calculate linguistic aspects such as sentence structures, essay
+            structures and vocabularies so that you can write band-7 essay with enough
+            flexibility.
+          </p>
+        </div>
 
         {/*
           Link (not a Form) — navigates to dashboard without any server action.

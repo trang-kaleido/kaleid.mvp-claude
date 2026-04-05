@@ -182,6 +182,18 @@ export default function UnitCompletePage({ loaderData }: Route.ComponentProps) {
           </div>
         )}
 
+        {/* ── Guiding content ──────────────────────────────────────────── */}
+        <div className="rounded-lg border border-gray-200 bg-white p-5 flex flex-col gap-2">
+          <p className="text-sm text-gray-700 leading-relaxed">
+            Every time you complete a prep-unit, there will be more questions in Question Bank
+            available for you to practice applying what you have learnt. These questions become
+            available once you have collected enough PoVs to answer them.
+          </p>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Your essay will be sent to your teacher to review.
+          </p>
+        </div>
+
         {/* ── Action Buttons ───────────────────────────────────────────── */}
         {/*
           Two links side-by-side:

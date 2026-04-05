@@ -93,10 +93,10 @@ export async function loader(args: Route.LoaderArgs) {
     throw redirect("/dashboard");
   }
 
-  // If the student is not on p2, send them to wherever they actually are.
+  // If the student is not on p2, send them through the phase router.
   // (Handles browser back-button or bookmarked URL edge cases.)
   if (progress.currentPhase !== "p2") {
-    throw redirect(`/unit/${unitId}/${progress.currentPhase}`);
+    throw redirect(`/unit/${unitId}`);
   }
 
   // Fetch the question AND sentences — we need both.

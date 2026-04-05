@@ -261,6 +261,17 @@ export default function DashboardPage({ loaderData }: Route.ComponentProps) {
           <p className="text-sm text-gray-500 mt-1">{tierLabel}</p>
         </div>
 
+        {/* Guiding content banner */}
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 mb-6 flex flex-col gap-1">
+          <p className="text-sm font-semibold text-blue-800">
+            In each prep-unit, there are 3 steps:
+          </p>
+          <p className="text-sm text-blue-700">Step 1: Answer the question by yourself.</p>
+          <p className="text-sm text-blue-700">Step 2: Understand PoVs with practice questions.</p>
+          <p className="text-sm text-blue-700">Step 3: Answer the question again with what you have learnt.</p>
+          <p className="text-sm text-blue-600 mt-1">Your essay will be sent to your teacher to compare.</p>
+        </div>
+
         {/* Unit list — all units in sequence order */}
         <UnitList units={units} />
 

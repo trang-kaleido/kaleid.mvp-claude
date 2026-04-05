@@ -18,14 +18,17 @@ datasource db {
 enum UnitStatus {
   locked      // Student hasn't reached this unit yet
   in_progress // Student is currently working on this unit
-  complete    // Student finished all phases (P0 -> P1 -> P2)
+  complete    // Student finished all phases (P0 → P1 sub-phases → P2)
 }
 
 // Which phase the student should resume at within a unit
 enum CurrentPhase {
-  p0  // Cold Write (no peek, no scaffold)
-  p1  // Encoding (10 practices)
-  p2  // Applying (L4W essay write)
+  p0                // Cold Write (entry via p0/intro)
+  p1                // DEPRECATED — split into sub-phases below; never written by new code
+  p1_pov_intro      // PoV Introduction Screen
+  p1_pov_encoding   // PoV Encoding — L3M_POV + L2M_POV
+  p1_essay_encoding // Essay Encoding — L4M through L2F
+  p2                // Applying (entry via p2/intro)
 }
 
 // Type of essay artifact submitted

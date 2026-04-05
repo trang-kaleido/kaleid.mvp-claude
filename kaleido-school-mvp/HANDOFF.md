@@ -2,6 +2,80 @@
 
 ---
 
+## Session 2026-04-05 — P1 Redesign — COMPLETE ✓
+
+**What was done:**
+- Executed full `PLAN-p1-redesign.md` — all 7 new routes + all modifications
+- Split monolithic `p1` into 3 sub-routes: `p1/pov-intro`, `p1/pov-encoding`, `p1/essay-encoding`
+- Added `p0/intro` and `p2/intro` entry screens; added `onboarding/intro` first screen
+- Expanded `CurrentPhase` enum: `p1_pov_intro`, `p1_pov_encoding`, `p1_essay_encoding`
+- Added guiding content to: onboarding/tier, onboarding/complete, dashboard, unit-complete
+- Schema pushed to new Supabase project `yxxmjptlkeewcabczlgt` via SQL Editor
+- DB ENV: transaction mode pooler, `postgres.yxxmjptlkeewcabczlgt`, region `ap-southeast-1`
+- typecheck: 0 errors; F16 + F17 marked passes: true
+
+**Files changed:** `prisma/schema.prisma`, `app/routes.ts`, `app/services/phase-transition.server.ts`, `app/lib/json.server.ts` (new), `app/routes/unit.$unitId.tsx`, `app/routes/unit.$unitId.p0.tsx`, `app/routes/unit.$unitId.p2.tsx`, `app/routes/sign-up.tsx`, `app/routes/home.tsx`, `app/routes/onboarding.tier.tsx`, `app/routes/onboarding.complete.tsx`, `app/routes/dashboard.tsx`, `app/routes/unit-complete.$unitId.tsx`, `app/components/practices/MCQPractice.tsx`, `app/components/ui/PeekModal.tsx` — plus 7 new route files.
+
+**Debt:** RLS policies not yet set on new school tables — app will fail at runtime until `service_role` key is used or policies added in Supabase.
+
+---
+
+## Session 2026-03-30 — P1 Redesign Plan + DB Migration (pipeline-3) — PLAN READY, NOT STARTED ⏳
+
+**Context:** Pipeline-3 is complete. New DB is populated with the redesigned `practices`
+array (14 items, was 12). Two new practice codes added: `POV_INTRO` (index 1) and
+`L2M_POV` (index 3); `L3M` renamed to `L3M_POV` (index 2); essay encoding practices
+shifted to indices 4–12. The School code has NOT been updated yet — it still targets
+the old 12-item array and the old monolithic `p1` route.
+
+**What was done this session:**
+- Reviewed all relevant specs: `practice_redesign_spec.md`, `LAB-SCHOOL-CONTRACT.md`,
+  `Update routes.md`, `guiding content for routes.md`
+- Audited current school code: `unit.$unitId.p1.tsx`, `phase-transition.server.ts`,
+  `unit.$unitId.tsx` (phase router), `prisma/schema.prisma`, `routes.ts`, `sign-up.tsx`
+- Wrote full implementation plan: `PLAN-p1-redesign.md`
+- Resolved all open questions in the plan (see Resolved Decisions section of plan)
+
+**Nothing was committed. No code was changed. The plan is the only output.**
+
+**Prior debt status (from 2026-03-21 session):** All 4 debt items are now prerequisites
+in the plan (Steps PR-1 through PR-3). Pipeline-3 is confirmed done, so those items
+are now unblocked and should be executed first before the new routes are built.
+
+---
+
+**Next step: Execute `PLAN-p1-redesign.md` in full.**
+
+Read the plan before touching any file. The plan is self-contained — all open questions
+are resolved. Execute steps in order: Prerequisites → Steps 1–11.
+
+**Key things to know before starting:**
+
+1. **Prisma enum:** Add new `CurrentPhase` values but do NOT remove `p1` — PostgreSQL
+   cannot drop enum values. Keep `p1` as a deprecated comment. Run `npx prisma db push`
+   then `npx prisma generate` after schema change.
+
+2. **Phase router** (`unit.$unitId.tsx`): Replace the simple string interpolation
+   `redirect(\`/unit/${unitId}/${phase}\`)` with an explicit map object — the new
+   phase names don't directly correspond to URL segments.
+
+3. **Old `unit.$unitId.p1.tsx`**: This file becomes `unit.$unitId.p1.essay-encoding.tsx`.
+   The main changes are: practice index offset (was `+1`, now `+4`), practice count
+   (was 10, now 9), remove `L3M` from `MCQ_CODES`, update intent string from
+   `complete_p1` to `complete_essay_encoding`, update phase guard from `p1` to
+   `p1_essay_encoding`.
+
+4. **Post-signup redirect:** Add `afterSignUpUrl="/onboarding/intro"` prop to `<SignUp />`
+   in `sign-up.tsx`. One line. No Clerk dashboard access needed.
+
+5. **Essay reading in pov-encoding:** The model essay must be rendered as a mandatory
+   inline reading block BEFORE the first MCQ question appears — not just as a Peek
+   modal. Implement as a two-stage component: `"reading_essay"` → `"practice"`.
+
+**Typecheck target:** `npm run typecheck` → 0 errors before closing the session.
+
+---
+
 ## Session 2026-03-21 — E2E Debug (pipeline-2 data) — NOT COMMITTED ⚠️
 
 **Context:** E2E student flow tested against pipeline-2 DB. App was broken at 3 points.

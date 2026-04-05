@@ -40,7 +40,7 @@ interface Sentence {
   canonical_text: string;   // full sentence text
   rhetoric_tag: string;
   rhetoric_label: string;   // e.g. "Body — unpacks the causal mechanism"
-  direction_tag: string;
+  direction_tag: string | null;
   lexical_items: LexicalItem[];
   syntax_items: string[];
 }

@@ -5,10 +5,12 @@
  * on the dashboard (link: `/unit/:unitId`), this loader:
  *   1. Checks that the unit is not locked
  *   2. Reads the student's currentPhase for this unit
- *   3. Redirects to the correct phase sub-route:
- *      - p0 → /unit/:unitId/p0 (Cold Write)
- *      - p1 → /unit/:unitId/p1 (Encoding Practices — F07)
- *      - p2 → /unit/:unitId/p2 (L4W Essay Write — F08)
+ *   3. Redirects to the correct phase sub-route via an explicit map:
+ *      - p0               → /unit/:unitId/p0/intro
+ *      - p1_pov_intro     → /unit/:unitId/p1/pov-intro
+ *      - p1_pov_encoding  → /unit/:unitId/p1/pov-encoding
+ *      - p1_essay_encoding → /unit/:unitId/p1/essay-encoding
+ *      - p2               → /unit/:unitId/p2/intro
  *
  * WHY does this file exist instead of putting the logic in each phase route?
  * The dashboard links to /unit/:unitId — it doesn't know which phase the
@@ -56,10 +58,21 @@ export async function loader(args: Route.LoaderArgs) {
     throw redirect("/dashboard");
   }
 
-  // 5. Redirect to the correct phase sub-route.
-  // currentPhase defaults to 'p0' if somehow null — that's the safe fallback.
+  // 5. Redirect to the correct phase sub-route via explicit map.
+  // Phase names don't directly map to URL segments (e.g. p1_pov_intro ≠ /p1_pov_intro),
+  // so we maintain an explicit lookup instead of string interpolation.
   const phase = progress.currentPhase ?? "p0";
-  throw redirect(`/unit/${unitId}/${phase}`);
+
+  const phaseRoutes: Record<string, string> = {
+    p0:                `/unit/${unitId}/p0/intro`,
+    p1_pov_intro:      `/unit/${unitId}/p1/pov-intro`,
+    p1_pov_encoding:   `/unit/${unitId}/p1/pov-encoding`,
+    p1_essay_encoding: `/unit/${unitId}/p1/essay-encoding`,
+    p2:                `/unit/${unitId}/p2/intro`,
+  };
+
+  const destination = phaseRoutes[phase] ?? `/unit/${unitId}/p0/intro`;
+  throw redirect(destination);
 }
 
 // This component never renders — the loader always redirects first.
