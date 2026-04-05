@@ -1,9 +1,25 @@
 # HANDOFF — Kaleido MVP (Master)
 
-_Last updated: 2026-03-23_
+_Last updated: 2026-04-05_
 
 > **Start here.** This is the single entry point for any agent or session picking up this project.
 > Read this first, then follow the link to the workstream you're working on.
+
+---
+
+## Session 2026-04-05 — E2E student testing / P2 bug fixes
+
+- `kaleido-school-mvp/app/routes/unit.$unitId.p2.tsx` — fixed `sentences` parsing: replaced raw cast with `safeParseJson<Sentence[]>()` (same pattern as all P1 routes); was crashing with "not iterable" then returning empty panels
+- Confirmed: E2E flow reaches P2 write page and panels now populate
+
+**Bugs / debt logged for next session:**
+- `[ ] ISSUE: time tracking` — stopwatch only starts at essay-encoding; should start from first screen of P1 (pov-intro or pov-encoding)
+- `[ ] Remove color coding from PeekModal` — color-code-by-POS display should be stripped
+- `[ ] Practice 8 (L1F phrase fill) display` — hint words shown inline with context sentence is confusing; needs redesign so hints are visually separated
+- `[ ] P2 intro copy` — current instruction text ("These questions are to help you deepen your understanding…") belongs to the pov-encoding gate, not p2/intro; p2/intro needs its own copy: "You've understood the PoV and the essay structure. Now try to answer the question again."
+- `[ ] Submission confirmation screen` — after P2 essay submit, show a screen confirming essay sent to teacher (before or instead of bare unit-complete redirect)
+
+**Next step:** pick up any of the above bugs, or continue E2E testing through unit-complete screen.
 
 ---
 
@@ -18,32 +34,37 @@ The Lab writes. The School reads. Their interface is a single file: `data.json` 
 
 ---
 
-## Current project state — 2026-03-23
+## Current project state — 2026-03-30
 
 | Workstream | Status | Last active |
 |---|---|---|
 | Lab — P1 | ✅ Complete — v5, validates against 126 directions (Reference-v2.md) | 2026-03-22 |
-| Lab — P2 | 🟡 **`DIRECTION_LOOKUP` updated** (39 old → 126 new). Needs re-run against P1 v5 data to verify greedy + Q Bank | 2026-03-23 |
-| Lab — P3 | 🔴 **Rebuild needed** — still outputs 12 practices, needs 14. Missing `POV_INTRO`, `L3M_POV`, `L2M_POV` assemblers | 2026-03-23 |
+| Lab — P2 | ✅ **Complete** — `DIRECTION_LOOKUP` updated (126 entries), run against P1 v5 data, DB populated | 2026-03-23 |
+| Lab — P3 | ✅ **Complete** — rebuilt to output 14 practices; `POV_INTRO`, `L3M_POV`, `L2M_POV` assemblers added; DB populated | 2026-03-30 |
 | Lab → School contract | ✅ **v3 complete** — 14 practices, `POV_INTRO` + `L3M_POV` + `L2M_POV`, `direction_ref` gains `logic` + `blog_url` | 2026-03-23 |
-| UX Spec | ✅ **v3 complete** — 12 P1 practices across PoV Encoding + Essay Encoding sub-phases, new locked design rules | 2026-03-23 |
+| UX Spec | ✅ **v3 complete** — P1 split into PoV Encoding + Essay Encoding sub-phases, new locked design rules | 2026-03-23 |
 | Dev Brief | 🟡 **Stale** — §5.4 and §8.1 still say "12 practices" with old sequence. Contract v3 and UX Spec v3 are the SSOTs | 2026-03-11 |
 | Data schema redesign | ✅ **Design complete** — 7-table relational schema agreed (see Dev Brief §5 + §8) | 2026-03-11 |
 | School — `features.json` | ✅ **Current** — 16 features (F00–F15), matches Dev Brief + UX Spec + Lab-School Contract | 2026-03-12 |
-| School — F01 (DB schema) | ✅ Complete | 2026-03-13 |
-| School — F02 (Clerk auth) | ✅ Complete | 2026-03-14 |
-| School — F03 (Data ingestion) | 🟡 Script complete; `prisma.server.ts` adapter fixed — tasks 2.5.2–2.5.3 deferred to Lab re-run | 2026-03-15 |
+| School — F01–F15 (all features) | ✅ Built and typechecking — but not yet updated for 14-item practices array or new P1 sub-routes | 2026-03-21 |
+| School — P1 redesign | 🔴 **Not started** — plan written (`PLAN-p1-redesign.md`), ready to execute | 2026-03-30 |
 | Doc hierarchy + CLAUDE.md | ✅ **Complete** — 6-rank hierarchy model encoded in root CLAUDE.md | 2026-03-12 |
 
 ---
 
 ## Active blockers
 
-**P3 rebuild blocks School rendering.** P3 v4 still outputs 12 practices. Contract v3 and UX Spec v3 require 14 (adds `POV_INTRO`, `L3M_POV`, `L2M_POV`). Until P3 is rebuilt, no valid `data.json` can be produced for the School.
+**School code not updated for 14-item practices array.** Lab is complete and DB is
+populated. The School app still targets the old 12-item array and the old monolithic
+`/unit/:unitId/p1` route. A full implementation plan is ready:
+`kaleido-school-mvp/PLAN-p1-redesign.md`. Execute this plan to unblock School rendering.
 
-**P2 needs a live data run.** `DIRECTION_LOOKUP` is updated (126 entries, correct format), but P2 has not been run against P1 v5 data yet. Greedy convergence and Q Bank unlock behavior with fine-grained directions are untested.
+**Dev Brief is stale.** §5.4 and §8.1 still describe the old 12-practice pipeline.
+Contract v3 and UX Spec v3 are the authorities — Dev Brief is informational only.
+Low priority until the School redesign is shipped.
 
-**Dev Brief is stale.** §5.4 and §8.1 still describe the old 12-practice pipeline. Contract v3 and UX Spec v3 are the authorities — Dev Brief is informational only until updated.
+**Resolved blockers (2026-03-30):** P3 rebuilt — outputs 14 practices per Contract v3.
+New DB populated. School implementation plan written with all open questions resolved.
 
 **Resolved blockers (2026-03-23):** P2 `DIRECTION_LOOKUP` replaced — 39 old-name flat-string entries → 126 new-name entries with `{argument, logic, blog_url}`. `direction_ref` write updated to include `logic` and `blog_url`. UX Spec updated to v3.0. Contract already at v3.
 **Resolved blockers (2026-03-12):** `features.json` updated — added `DirectionRef` to F01 + F03, fixed `current_phase` enum to `p0 / p1 / p2` (was `p1_encoding / p2_applying`), confirmed Clerk auth and Prisma ORM are correct. P2 + P3 pipelines rebuilt and verified. `LAB-SCHOOL-CONTRACT.md` rewritten with TS interfaces + Zod validators. All 5 open questions resolved (rhetoric_label stays in JSONB, direction_ref owned by P2, Q Bank two-rows-per-tier confirmed, cosine thresholds locked for MVP).
@@ -115,7 +136,7 @@ School HANDOFF (untouchable) references `kaleido-mvp-designing/kaleido-lab-mvp/.
 |---|---|
 | All student UX, interaction rules, practice mechanics, session model | `_kaleido-school-mvp-ux.md` (v3.0) |
 | System architecture, data contract shape, DB schema, tech stack | `_kaleido-MVP-dev-brief.md` |
-| Lab pipeline states and next steps | `kaleido-lab-mvp/HANDOFF.md` |
+| Lab pipeline states and next steps | `kaleido-lab-mvp/HANDOFF copy.md` |
 | School session state and feature sequence | `kaleido-school-mvp/HANDOFF.md` |
 | Lab → School rendering contract | `LAB-SCHOOL-CONTRACT.md` (project root, v3) |
 | Document hierarchy (AI agent context) | Root `CLAUDE.md` § "Document Hierarchy — Source of Truth Ranking" |
@@ -127,7 +148,7 @@ School HANDOFF (untouchable) references `kaleido-mvp-designing/kaleido-lab-mvp/.
 
 | Workstream                | Handoff file                                                                                                                     |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 🔬 Lab (pipelines)        | [`kaleido-lab-mvp/HANDOFF.md`](kaleido-lab-mvp/HANDOFF.md)                                                                       |
+| 🔬 Lab (pipelines)        | [`kaleido-lab-mvp/HANDOFF copy.md`](<kaleido-lab-mvp/HANDOFF copy.md>)                                                           |
 | 🏫 School (Remix app)     | [`kaleido-school-mvp/HANDOFF.md`](kaleido-school-mvp/HANDOFF.md)                                                                 |
 | 🔗 Lab → School interface | [`LAB-SCHOOL-CONTRACT.md`](LAB-SCHOOL-CONTRACT.md) (project root) |
 
@@ -156,7 +177,7 @@ kaleido-mvp-claude/
 ├── kaleido-lab-mvp/
 │   ├── HANDOFF.md                          ← lab session log
 │   ├── outputs/
-│   │   └── data.json                       ← runtime backup (not a design source)
+│   │   └── data.json                       ← pipeline output sample 
 │   └── lab-mvp-data-pipelines/
 │       ├── pipeline_1_v5.ipynb             ← 126 directions, validated against Reference-v2.md
 │       ├── pipeline_2_v4.ipynb             ← DIRECTION_LOOKUP updated to 126 (2026-03-23)

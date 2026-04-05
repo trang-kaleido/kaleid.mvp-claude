@@ -26,6 +26,7 @@ import { z } from "zod";
 import { requireStudent } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { PhaseTransitionService } from "~/services/phase-transition.server";
+import { safeParseJson } from "~/lib/json.server";
 import { CountdownTimer } from "~/components/ui/CountdownTimer";
 import type { Route } from "./+types/unit.$unitId.p2";
 
@@ -111,7 +112,7 @@ export async function loader(args: Route.LoaderArgs) {
     throw redirect("/dashboard");
   }
 
-  const sentences = prepUnit.sentences as unknown as Sentence[];
+  const sentences = safeParseJson<Sentence[]>(prepUnit.sentences);
 
   // Build deduplicated lexical items list.
   // We use a Map keyed by phrase — if the same phrase appears twice, the first
@@ -121,7 +122,7 @@ export async function loader(args: Route.LoaderArgs) {
   const lexicalItems: { phrase: string; pos: string }[] = [];
 
   for (const sentence of sentences) {
-    for (const item of sentence.lexical_items) {
+    for (const item of (sentence.lexical_items ?? [])) {
       if (!seenPhrases.has(item.phrase)) {
         seenPhrases.add(item.phrase);
         lexicalItems.push(item);
@@ -132,7 +133,7 @@ export async function loader(args: Route.LoaderArgs) {
   // Build deduplicated syntax patterns list.
   // Using Set to remove duplicates, then spreading back into an array.
   const syntaxPatterns = [
-    ...new Set(sentences.flatMap((s) => s.syntax_items)),
+    ...new Set(sentences.flatMap((s) => s.syntax_items ?? [])),
   ];
 
   return { unitId, question: prepUnit.question, lexicalItems, syntaxPatterns };
