@@ -21,7 +21,7 @@
  *   The PARENT (PracticeRenderer) handles saving to the database via useFetcher.
  */
 import { useState, useRef, useEffect } from "react";
-import { GradingService } from "~/services/grading.server";
+import { GradingService } from "~/services/grading";
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 

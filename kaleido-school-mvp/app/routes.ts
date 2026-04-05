@@ -4,9 +4,9 @@ export default [
   // Home page
   index("routes/home.tsx"),
 
-  // Authentication routes (Clerk)
-  route("sign-in", "routes/sign-in.tsx"),
-  route("sign-up", "routes/sign-up.tsx"),
+  // Authentication routes (Clerk) — wildcard handles multi-step sub-paths
+  route("sign-in/*", "routes/sign-in.tsx"),
+  route("sign-up/*", "routes/sign-up.tsx"),
 
   // Onboarding flow — 4 screens (F04): intro → tier → teacher-code → complete
   route("onboarding/intro", "routes/onboarding.intro.tsx"),
@@ -44,6 +44,9 @@ export default [
   // Educator Console (F15)
   route("educator/students", "routes/educator.students.tsx"),
   route("educator/:studentId", "routes/educator.$studentId.tsx"),
+
+  // Fallback
+  route("unauthorized", "routes/unauthorized.tsx"),
 
   // API routes
   route("api/webhooks/clerk", "routes/api.webhooks.clerk.ts"),

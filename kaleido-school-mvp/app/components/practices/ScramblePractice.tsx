@@ -30,7 +30,7 @@
  *   stale closure issues that would occur with useState in onDragOver.
  */
 import { useState, useRef, useEffect } from "react";
-import { GradingService } from "~/services/grading.server";
+import { GradingService } from "~/services/grading";
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 // These match LAB-SCHOOL-CONTRACT §7.4–7.7 exactly.
@@ -382,10 +382,19 @@ export function ScramblePractice({
    */
   function handleAdvance() {
     if (questionIndex + 1 < totalQuestions) {
-      setQuestionIndex((prev) => prev + 1);
+      const nextIndex = questionIndex + 1;
+      // Reset ALL derived state synchronously in the same batch so the render
+      // that fires after this call sees the new questionIndex AND empty/fresh
+      // placedIndices/arrangement at the same time.
+      // If placedIndices were only reset via useEffect (after render), the
+      // intermediate render would use new question's chunks with stale indices
+      // → chunks[stale_index] can be undefined when the new question has fewer
+      // chunks than the previous one, causing a crash.
+      setQuestionIndex(nextIndex);
       setAttemptCount(0);
       setLastResult(null);
-      // State reset (placedIndices + arrangement) handled by useEffect on questionIndex.
+      setPlacedIndices([]);
+      setArrangement(getInitialArrangement(practice, 0, nextIndex));
     } else {
       onComplete(allAttemptsRef.current);
     }

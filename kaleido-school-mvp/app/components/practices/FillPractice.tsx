@@ -22,7 +22,7 @@
  *   No correct answer is ever shown on failure.
  */
 import { useState, useRef, useEffect } from "react";
-import { GradingService } from "~/services/grading.server";
+import { GradingService } from "~/services/grading";
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 // These match LAB-SCHOOL-CONTRACT §7.8 exactly.
@@ -34,11 +34,18 @@ interface FillPart {
   blank_index?: number; // populated when type === "blank"
 }
 
-/** One context line — either a surrounding sentence or the target sentence. */
+/** One context line — either a surrounding sentence or the target sentence.
+ *
+ * Non-target lines (isTarget=false): Lab outputs { order, text, isTarget }
+ *   — a plain string, no parts array.
+ * Target line (isTarget=true): Lab outputs { order, parts, isTarget }
+ *   — inline mix of text spans and blank placeholders.
+ */
 interface FillContext {
   order: number;
-  parts: FillPart[];
   isTarget: boolean;
+  text?: string;       // present on non-target lines
+  parts?: FillPart[];  // present on the target line
 }
 
 /** Metadata for one blank: the correct answer, POS hint, and similar phrases. */
@@ -273,11 +280,8 @@ export function FillPractice({
    */
   function renderContextLine(ctx: FillContext) {
     if (!ctx.isTarget) {
-      // Non-target: join text parts and display as gray surrounding context.
-      const text = ctx.parts
-        .filter((p) => p.type === "text")
-        .map((p) => p.text ?? "")
-        .join("");
+      // Non-target: Lab stores this as a plain `text` string (not a parts array).
+      const text = ctx.text ?? "";
       return (
         <p key={ctx.order} className="text-sm leading-relaxed text-gray-400 italic">
           {text}
@@ -288,7 +292,7 @@ export function FillPractice({
     // Target: inline render — text spans + blank inputs.
     return (
       <div key={ctx.order} className="flex flex-wrap items-end gap-x-1 gap-y-4">
-        {ctx.parts.map((part, partIdx) => {
+        {(ctx.parts ?? []).map((part, partIdx) => {
           if (part.type === "text") {
             return (
               <span key={partIdx} className="text-sm text-gray-800">

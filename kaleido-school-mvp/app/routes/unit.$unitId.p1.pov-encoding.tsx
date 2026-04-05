@@ -347,6 +347,14 @@ function PovEncodingRenderer({
 export default function PovEncodingPage({ loaderData }: Route.ComponentProps) {
   const { unitId, sentences, povEncoding, povCards } = loaderData;
 
+  // Resume the P1 stopwatch from the elapsed time since pov-intro was entered.
+  const [initialSeconds] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    const stored = sessionStorage.getItem(`p1_start_${unitId}`);
+    if (!stored) return 0;
+    return Math.floor((Date.now() - Number(stored)) / 1000);
+  });
+
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [peekOpen, setPeekOpen] = useState<boolean>(false);
 
@@ -359,7 +367,7 @@ export default function PovEncodingPage({ loaderData }: Route.ComponentProps) {
           <h1 className="text-sm font-bold text-gray-900">PoV Encoding</h1>
 
           <div className="flex items-center gap-3">
-            <StopwatchTimer isPaused={isPaused} />
+            <StopwatchTimer isPaused={isPaused} initialSeconds={initialSeconds} />
 
             <button
               onClick={() => setIsPaused((prev) => !prev)}

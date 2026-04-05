@@ -15,6 +15,26 @@ Lab pipelines and the School app share **the same Supabase project**:
 
 ---
 
+## ⚠️ MVP Limitation — Rerunning Pipelines Affects Already-Onboarded Students
+
+**Known gap, accepted for MVP. Must be addressed before multi-cohort use.**
+
+When pipelines are rerun for a new batch, already-onboarded students are **not isolated** from the changes. Specifically:
+
+- `StudentPath.batch_id` is locked at onboarding and correctly tracks which batch a student is on.
+- `TierUnitSequence` rows are written per `batch_id` — old batch rows survive when a new batch is written, so student sequence progression is safe.
+- **However**, `prep_unit` rows are upserted in-place on `unit_id`. If the new batch reuses the same `unit_id`s with updated content (`question`, `sentences`, `practices`), existing students will silently see the new content even though their progress history was built on the old content.
+
+**Practical consequence:** If any student has started or completed a unit, rerunning P3 (or the full pipeline) will change the content under them mid-progress. Their `StudentAttempt` records will reflect answers to old content that no longer matches what `prep_unit` now shows.
+
+**Safe rerun conditions (MVP):**
+- Run pipelines only before any students have been onboarded, OR
+- Coordinate with the school to confirm no students have active progress on the affected batch.
+
+**Future fix (post-MVP):** Version `prep_unit` content per batch — store `(unit_id, batch_id)` as a composite key, and have students read content through their `batch_id` rather than `unit_id` alone. This would give full isolation between cohorts.
+
+---
+
 ## Step 1 — Re-run Pipeline 2 (Colab)
 
 1. Open `kaleido-lab-mvp/lab-mvp-data-pipelines/pipeline_2_v4.ipynb` in Colab

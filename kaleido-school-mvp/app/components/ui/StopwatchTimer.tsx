@@ -31,19 +31,22 @@ import { useEffect, useRef, useState } from "react";
 interface StopwatchTimerProps {
   /** When true, the timer freezes. When false (default), it counts up. */
   isPaused?: boolean;
+  /** Start counting from this many seconds instead of 0 (e.g. for cross-route continuity). */
+  initialSeconds?: number;
 }
 
-export function StopwatchTimer({ isPaused = false }: StopwatchTimerProps) {
+export function StopwatchTimer({ isPaused = false, initialSeconds = 0 }: StopwatchTimerProps) {
   // pausedSecondsRef: total elapsed seconds BEFORE the current running segment.
   // Updated each time the timer is paused so we can resume from the right place.
-  const pausedSecondsRef = useRef<number>(0);
+  // Seeded with initialSeconds so cross-route time is preserved.
+  const pausedSecondsRef = useRef<number>(initialSeconds);
 
   // startTimeRef: the wall-clock moment the current running segment began.
   // Reset to Date.now() every time the timer transitions from paused → running.
   const startTimeRef = useRef<number>(Date.now());
 
   // displaySeconds drives the MM:SS render. Changing it triggers a re-render.
-  const [displaySeconds, setDisplaySeconds] = useState<number>(0);
+  const [displaySeconds, setDisplaySeconds] = useState<number>(initialSeconds);
 
   useEffect(() => {
     if (isPaused) {

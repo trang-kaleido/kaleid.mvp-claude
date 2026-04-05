@@ -8,6 +8,7 @@
  * No questions, no timer, no Peek. CTA advances phase to p1_pov_encoding.
  * No StudentAttempt rows written — POV_INTRO has no pass tracking.
  */
+import { useEffect } from "react";
 import { redirect, Form } from "react-router";
 import { requireStudent } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
@@ -99,6 +100,15 @@ export async function action(args: Route.ActionArgs) {
 
 export default function PovIntroPage({ loaderData }: Route.ComponentProps) {
   const { unitId, povIntro } = loaderData;
+
+  // Record the wall-clock moment the student enters P1 so subsequent sub-routes
+  // can initialise their stopwatch from the correct elapsed offset.
+  useEffect(() => {
+    const key = `p1_start_${unitId}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, String(Date.now()));
+    }
+  }, [unitId]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

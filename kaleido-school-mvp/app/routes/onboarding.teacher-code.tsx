@@ -15,7 +15,7 @@
  */
 import { redirect } from "react-router";
 import { Form, useActionData, useLoaderData } from "react-router";
-import { getAuth } from "@clerk/react-router/server";
+import { getAuth, clerkClient } from "@clerk/react-router/server";
 import { z } from "zod";
 import { prisma } from "~/lib/prisma.server";
 import type { Route } from "./+types/onboarding.teacher-code";
@@ -146,6 +146,11 @@ export async function action(args: Route.ActionArgs) {
         status: index === 0 ? ("in_progress" as const) : ("locked" as const),
       })),
     });
+  });
+
+  // Mark the Clerk user as a student so requireStudent() lets them through
+  await clerkClient(args).users.updateUser(userId, {
+    publicMetadata: { role: "student" },
   });
 
   // All DB writes succeeded — go to the confirmation screen
