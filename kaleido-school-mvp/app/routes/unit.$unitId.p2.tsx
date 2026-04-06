@@ -186,9 +186,8 @@ export async function action(args: Route.ActionArgs) {
     result.data.essay
   );
 
-  // Redirect to the unit complete screen.
-  // Until F12 is built, this will 404 — that's expected (same pattern as P1 → P2).
-  throw redirect(`/unit-complete/${unitId}`);
+  // Redirect to the submission confirmation screen before unit-complete.
+  throw redirect(`/unit/${unitId}/p2/submitted`);
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────

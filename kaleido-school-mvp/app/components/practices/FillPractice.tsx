@@ -275,12 +275,13 @@ export function FillPractice({
   /**
    * renderContextLine — one context row.
    *
-   * Non-target: join all text parts → gray italic prose (surrounding context).
-   * Target:     inline mix of text spans and blank inputs with hints below.
+   * Non-target: plain gray italic prose (surrounding context).
+   * Target:     inline text spans + blank inputs only — no hints inline.
+   *             Hints are rendered separately in renderHintsSection() below
+   *             the context block so the sentence reads cleanly.
    */
   function renderContextLine(ctx: FillContext) {
     if (!ctx.isTarget) {
-      // Non-target: Lab stores this as a plain `text` string (not a parts array).
       const text = ctx.text ?? "";
       return (
         <p key={ctx.order} className="text-sm leading-relaxed text-gray-400 italic">
@@ -289,9 +290,9 @@ export function FillPractice({
       );
     }
 
-    // Target: inline render — text spans + blank inputs.
+    // Target: inline render — text spans + bare inputs (no hints attached).
     return (
-      <div key={ctx.order} className="flex flex-wrap items-end gap-x-1 gap-y-4">
+      <div key={ctx.order} className="flex flex-wrap items-baseline gap-x-1 gap-y-2">
         {(ctx.parts ?? []).map((part, partIdx) => {
           if (part.type === "text") {
             return (
@@ -301,42 +302,65 @@ export function FillPractice({
             );
           }
 
-          // Blank input — look up the FillBlank metadata for this index.
           const blankIdx = part.blank_index!;
-          const blankMeta = currentQuestion.blanks.find((b) => b.index === blankIdx);
           const isWrong = wrongIndices.includes(blankIdx) && lastResult === "wrong";
 
           return (
-            <div key={partIdx} className="flex flex-col items-start gap-0.5">
-              {/* The text input for this blank */}
-              <input
-                type="text"
-                value={answers[blankIdx] ?? ""}
-                onChange={(e) => {
-                  if (lastResult !== null || isPaused) return;
-                  setAnswers((prev) => ({ ...prev, [blankIdx]: e.target.value }));
-                }}
-                disabled={lastResult !== null || isPaused}
-                className={`rounded border px-2 py-1 text-sm w-32 transition-colors ${
-                  isWrong
-                    ? "border-red-500 ring-2 ring-red-400 bg-red-50"
-                    : "border-gray-300 bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-300 focus:outline-none"
-                }`}
-                aria-label={`Blank ${blankIdx + 1}`}
-              />
-              {/* POS hint — always visible below the input (UX Spec §9.3) */}
-              {blankMeta?.pos_hint && (
-                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                  {blankMeta.pos_hint}
+            <input
+              key={partIdx}
+              type="text"
+              value={answers[blankIdx] ?? ""}
+              onChange={(e) => {
+                if (lastResult !== null || isPaused) return;
+                setAnswers((prev) => ({ ...prev, [blankIdx]: e.target.value }));
+              }}
+              disabled={lastResult !== null || isPaused}
+              className={`rounded border px-2 py-1 text-sm w-32 transition-colors ${
+                isWrong
+                  ? "border-red-500 ring-2 ring-red-400 bg-red-50"
+                  : "border-gray-300 bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-300 focus:outline-none"
+              }`}
+              aria-label={`Blank ${blankIdx + 1}`}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  /**
+   * renderHintsSection — dedicated hints panel shown below the context block.
+   *
+   * Renders one column per blank: a numbered label, the POS hint, and
+   * similar-phrase tags. Visually separated from the sentence so neither
+   * the sentence nor the hints interfere with each other's readability.
+   */
+  function renderHintsSection() {
+    const blanks = currentQuestion.blanks;
+    if (blanks.length === 0) return null;
+
+    return (
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-3">
+          Hints
+        </p>
+        <div className="flex flex-wrap gap-4">
+          {blanks.map((blank) => (
+            <div key={blank.index} className="flex flex-col gap-1.5 min-w-[120px]">
+              <span className="text-xs font-semibold text-blue-700">
+                Blank {blank.index + 1}
+              </span>
+              {blank.pos_hint && (
+                <span className="text-[10px] font-medium uppercase tracking-wide text-blue-500">
+                  {blank.pos_hint}
                 </span>
               )}
-              {/* Similar phrases — always visible as small gray tags */}
-              {blankMeta && blankMeta.similar_phrases.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-0.5">
-                  {blankMeta.similar_phrases.map((phrase, i) => (
+              {blank.similar_phrases.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {blank.similar_phrases.map((phrase, i) => (
                     <span
                       key={i}
-                      className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500"
+                      className="rounded-full bg-white border border-blue-200 px-2 py-0.5 text-[10px] text-blue-600"
                     >
                       {phrase}
                     </span>
@@ -344,8 +368,8 @@ export function FillPractice({
                 </div>
               )}
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     );
   }
@@ -386,6 +410,9 @@ export function FillPractice({
           .sort((a, b) => a.order - b.order)
           .map((ctx) => renderContextLine(ctx))}
       </div>
+
+      {/* ── Hints panel ─────────────────────────────────────────────────── */}
+      {renderHintsSection()}
 
       {/* ── Submit button (shown when awaiting input) ────────────────────── */}
       {lastResult === null && (

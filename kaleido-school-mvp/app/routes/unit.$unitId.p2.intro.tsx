@@ -54,13 +54,10 @@ export default function P2IntroPage({ loaderData }: Route.ComponentProps) {
         </p>
 
         {/* ── Guiding content ─────────────────────────────────────────── */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 flex flex-col gap-2">
+        <div className="rounded-lg border border-gray-200 bg-white p-5">
           <p className="text-sm text-gray-700 leading-relaxed">
-            These questions are to help you deepen your understanding, not to earn a score.
-            Use it as a tool, not a test.
-          </p>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Record on your effort will be sent for teacher to review.
+            You&apos;ve understood the PoV and the essay structure. Now try to answer
+            the question again.
           </p>
         </div>
 

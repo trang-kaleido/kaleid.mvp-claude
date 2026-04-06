@@ -224,9 +224,14 @@ function EssayDisplay({ sentences }: { sentences: Sentence[] }) {
           </p>
           <div className="rounded-lg border border-gray-200 bg-white p-4 flex flex-col gap-2">
             {paraSentences.map((s) => (
-              <p key={s.sentence_id} className="text-sm text-gray-800 leading-relaxed">
-                {s.canonical_text}
-              </p>
+              <div key={s.sentence_id} className="relative group">
+                <p className="text-sm text-gray-800 leading-relaxed">
+                  {s.canonical_text}
+                </p>
+                <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none">
+                  {s.rhetoric_label}
+                </span>
+              </div>
             ))}
           </div>
         </div>
@@ -295,7 +300,9 @@ function PovEncodingRenderer({
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm text-amber-800 leading-relaxed">
             Read the model essay below. The questions that follow will ask you about
-            how PoVs are expressed in this writing.
+            how PoVs are expressed in this writing. These questions are to help you
+            deepen your understanding, not to earn a score. Use it as a tool, not a
+            test. A record of your effort will be sent for your teacher to review.
           </p>
         </div>
 

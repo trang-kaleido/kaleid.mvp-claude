@@ -32,6 +32,7 @@ export default [
   // P2 — Applying (F11)
   route("unit/:unitId/p2/intro", "routes/unit.$unitId.p2.intro.tsx"),
   route("unit/:unitId/p2", "routes/unit.$unitId.p2.tsx"),
+  route("unit/:unitId/p2/submitted", "routes/unit.$unitId.p2.submitted.tsx"),
 
   // Unit completion screens (F12)
   route("unit-complete/:unitId", "routes/unit-complete.$unitId.tsx"),

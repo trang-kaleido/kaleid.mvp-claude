@@ -1,14 +1,8 @@
 /**
  * PeekModal — displays the model essay, PoV cards, and lexical items panel.
  *
- * AC-3.9: Essay text colour-coded by POS (NOUN=emerald, VERB=red, ADV=blue),
- *         rhetoric labels as hover tooltips, PoV cards with blog links, lexical panel.
  * AC-3.10: No rate limit — the parent controls isOpen freely; this component
  *          is stateless with respect to peek usage.
- *
- * SECURITY: No dangerouslySetInnerHTML anywhere in this file.
- *   Colour-coding is done by splitting canonical_text into text segments using
- *   JavaScript string operations, then rendering each segment as a React element.
  *
  * PROPS DESIGN: Why accept sentences[] + povCards[] rather than a full PrepUnit?
  *   The PoV cards need direction_ref.argument (the human-readable argument text),
@@ -64,132 +58,17 @@ interface PeekModalProps {
   povCards: PovCard[];     // pre-joined by P1 loader
 }
 
-// ─── POS Colour Helpers ──────────────────────────────────────────────────────
-
-/**
- * Returns the Tailwind class for a given part-of-speech tag.
- * NOUN  → emerald (green) + semibold
- * VERB  → red
- * ADV   → blue
- * Other → empty string (no class = default text colour)
- */
-function posClass(pos: string): string {
-  switch (pos) {
-    case "NOUN": return "text-emerald-600 font-semibold";
-    case "VERB": return "text-red-600";
-    case "ADV":  return "text-blue-600";
-    default:     return "";
-  }
-}
-
-/**
- * A text segment: either plain text (no pos) or a coloured phrase (has pos).
- * We build an array of these, then render each one as a React element.
- */
-interface TextSegment {
-  text: string;
-  pos?: string; // undefined = plain text
-}
-
-/**
- * Splits `text` into segments based on `lexicalItems`.
- *
- * ALGORITHM (safe, no regex injection, no dangerouslySetInnerHTML):
- * 1. Sort phrases longest-first — prevents "funding" matching inside
- *    "government funding" before the full phrase is found.
- * 2. Walk through the text character-by-character. At each position, check
- *    if any phrase starts here (case-insensitive).
- * 3. When a phrase is found, push any accumulated plain text before it, then
- *    push a coloured segment, then advance past the phrase.
- * 4. Push any remaining text as a plain segment at the end.
- *
- * WHY character-by-character instead of String.split()?
- * split() on a phrase like "the" would also split inside "there" or "another".
- * The character walk with exact prefix matching avoids false splits.
- */
-function splitIntoSegments(text: string, lexicalItems: LexicalItem[]): TextSegment[] {
-  // Step 1: Sort phrases longest-first to prevent partial-match interference.
-  const sorted = [...lexicalItems].sort((a, b) => b.phrase.length - a.phrase.length);
-
-  const segments: TextSegment[] = [];
-  let i = 0;
-  let plainStart = 0; // tracks the start of the current plain-text run
-
-  while (i < text.length) {
-    let matched = false;
-
-    for (const item of sorted) {
-      const phrase = item.phrase;
-      // Case-insensitive comparison: compare a slice of text to the phrase.
-      if (text.slice(i, i + phrase.length).toLowerCase() === phrase.toLowerCase()) {
-        // Flush any plain text accumulated before this match.
-        if (i > plainStart) {
-          segments.push({ text: text.slice(plainStart, i) });
-        }
-        // Push the matched phrase as a coloured segment.
-        segments.push({ text: text.slice(i, i + phrase.length), pos: item.pos });
-        i += phrase.length;
-        plainStart = i;
-        matched = true;
-        break; // Move on; the longest match at this position has been handled.
-      }
-    }
-
-    if (!matched) {
-      i++; // No phrase matched here — advance one character.
-    }
-  }
-
-  // Flush any remaining plain text after the last match.
-  if (plainStart < text.length) {
-    segments.push({ text: text.slice(plainStart) });
-  }
-
-  return segments;
-}
-
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 /**
- * Renders a single sentence with:
- * - Colour-coded lexical items (via segment splitting)
- * - A hover tooltip showing the rhetoric label
- *
- * The wrapping <span> has title={rhetoric_label} so the browser shows a
- * native tooltip on hover. This is the simplest accessible approach.
- */
-function ColourCodedSentence({ sentence }: { sentence: Sentence }) {
-  const segments = splitIntoSegments(sentence.canonical_text, sentence.lexical_items);
-
-  return (
-    // title= gives a browser native tooltip with the rhetoric label on hover.
-    // This satisfies AC-3.9 "rhetoric tag tooltips on sentence hover".
-    <span title={sentence.rhetoric_label} className="cursor-default">
-      {segments.map((seg, idx) =>
-        seg.pos ? (
-          <span key={idx} className={posClass(seg.pos)}>
-            {seg.text}
-          </span>
-        ) : (
-          // Plain text — React renders strings directly, no extra wrapper needed.
-          <span key={idx}>{seg.text}</span>
-        )
-      )}
-    </span>
-  );
-}
-
-/**
  * Groups sentences by paragraph_type and renders them as paragraph blocks.
- * Paragraphs are displayed in their natural order:
- * introduction → body_1 → body_2 → body_3 → conclusion
+ * Each sentence shows its rhetoric_label as a hover tooltip.
+ * Paragraphs are displayed in natural order:
+ * introduction → body_1 → body_2 → body_3 → body_4 → conclusion
  */
 function EssayPanel({ sentences }: { sentences: Sentence[] }) {
-  // Define the order paragraphs appear in the essay.
-  const paragraphOrder = ["introduction", "body_1", "body_2", "body_3", "conclusion"];
+  const paragraphOrder = ["introduction", "body_1", "body_2", "body_3", "body_4", "conclusion"];
 
-  // Group sentences by paragraph_type.
-  // Object.groupBy is not universally available, so we use reduce instead.
   const grouped = sentences.reduce<Record<string, Sentence[]>>((acc, s) => {
     const key = s.paragraph_type;
     if (!acc[key]) acc[key] = [];
@@ -197,48 +76,46 @@ function EssayPanel({ sentences }: { sentences: Sentence[] }) {
     return acc;
   }, {});
 
-  // Sort each group by sentence order (1-based).
   for (const key of Object.keys(grouped)) {
     grouped[key].sort((a, b) => a.order - b.order);
   }
 
-  // Pretty-print a paragraph_type key for display (e.g. "body_1" → "Body 1")
   function paragraphLabel(key: string): string {
     if (key === "introduction") return "Introduction";
     if (key === "conclusion") return "Conclusion";
-    // "body_1" → "Body 1", "body_2" → "Body 2", etc.
     return key.replace("body_", "Body ").replace("_", " ");
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-sm text-gray-500 uppercase tracking-wide">
-        Model Essay
-      </h3>
-      {/* Colour-coding legend so students understand the system */}
-      <div className="flex gap-4 text-xs">
-        <span className="text-emerald-600 font-semibold">■ Noun Phrases</span>
-        <span className="text-red-600">■ Verbs</span>
-        <span className="text-blue-600">■ Adverbs</span>
+      <div className="flex items-baseline justify-between">
+        <h3 className="font-semibold text-sm text-gray-500 uppercase tracking-wide">
+          Model Essay
+        </h3>
+        <p className="text-xs text-gray-400 italic">
+          Hover over any sentence to see its rhetorical function.
+        </p>
       </div>
       {paragraphOrder.map((paraType) => {
         const parasentences = grouped[paraType];
-        // Skip paragraph types not present in this essay (e.g. body_3 may not exist).
         if (!parasentences || parasentences.length === 0) return null;
         return (
           <div key={paraType} className="space-y-1">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               {paragraphLabel(paraType)}
             </p>
-            {/* Sentences in the same paragraph are rendered inline, space-separated. */}
-            <p className="text-sm leading-relaxed text-gray-800">
-              {parasentences.map((s, idx) => (
-                <span key={s.sentence_id}>
-                  {idx > 0 && " "}
-                  <ColourCodedSentence sentence={s} />
-                </span>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 flex flex-col gap-2">
+              {parasentences.map((s) => (
+                <div key={s.sentence_id} className="relative group">
+                  <p className="text-sm text-gray-800 leading-relaxed">
+                    {s.canonical_text}
+                  </p>
+                  <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none">
+                    {s.rhetoric_label}
+                  </span>
+                </div>
               ))}
-            </p>
+            </div>
           </div>
         );
       })}
@@ -410,7 +287,7 @@ export function PeekModal({ isOpen, onClose, sentences, povCards }: PeekModalPro
 
         {/* Three panels stacked vertically with a divider between each. */}
         <div className="space-y-8 mt-2">
-          {/* Panel 1: Colour-coded essay text with rhetoric tooltips */}
+          {/* Panel 1: Essay text with rhetoric label tooltips on hover */}
           <EssayPanel sentences={sentences} />
 
           {/* Divider */}
