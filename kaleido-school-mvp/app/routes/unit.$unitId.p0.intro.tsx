@@ -58,16 +58,16 @@ export default function P0IntroPage({ loaderData }: Route.ComponentProps) {
   const { unitId, question } = loaderData;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="min-h-screen bg-stone-50 p-6">
+      <div className="max-w-3xl mx-auto flex flex-col gap-6">
 
         {/* ── Step indicator ──────────────────────────────────────────── */}
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <p className="text-xs font-black uppercase tracking-widest text-gray-400">
           Step 1 of 3
         </p>
 
         {/* ── Guiding content ─────────────────────────────────────────── */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 flex flex-col gap-2">
+        <div className="rounded-lg border-2 border-gray-500 bg-white p-5 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-2">
           <p className="text-sm text-gray-700 leading-relaxed">
             Try to answer the question with your own original thinking.
           </p>
@@ -78,8 +78,8 @@ export default function P0IntroPage({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* ── IELTS Question preview ───────────────────────────────────── */}
-        <div className="rounded-lg border border-gray-300 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+        <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
             IELTS Task 2 Question
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">{question}</p>
@@ -89,7 +89,7 @@ export default function P0IntroPage({ loaderData }: Route.ComponentProps) {
         <div className="flex justify-end">
           <Link
             to={`/unit/${unitId}/p0`}
-            className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="rounded-lg bg-blue-600 border-2 border-gray-500 px-6 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Start Cold Write →
           </Link>

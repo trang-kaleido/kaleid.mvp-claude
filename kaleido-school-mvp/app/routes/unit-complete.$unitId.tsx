@@ -138,20 +138,20 @@ export default function UnitCompletePage({ loaderData }: Route.ComponentProps) {
   const { completedUnitNumber, newlyUnlockedQuestions } = loaderData;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="min-h-screen bg-stone-50 p-6">
+      <div className="max-w-3xl mx-auto flex flex-col gap-6">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
         {/*
           The "✓" checkmark gives a visual sense of success.
           completedUnitNumber comes from the loader (the sequencePosition of the unit just done).
         */}
-        <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
+        <div className="rounded-lg border-2 border-emerald-700 bg-emerald-50 p-6 text-center shadow-[4px_4px_0px_0px_rgb(4,120,87)]">
           <p className="text-4xl mb-2">✓</p>
-          <h1 className="text-2xl font-bold text-green-800">
+          <h1 className="text-2xl font-extrabold text-emerald-800">
             Unit {completedUnitNumber} Complete
           </h1>
-          <p className="text-sm text-green-600 mt-1">
+          <p className="text-sm text-emerald-600 mt-1">
             Great work — you've finished all three phases.
           </p>
         </div>
@@ -163,7 +163,7 @@ export default function UnitCompletePage({ loaderData }: Route.ComponentProps) {
           mapped to it), we skip this block entirely — no empty states needed.
         */}
         {newlyUnlockedQuestions.length > 0 && (
-          <div className="rounded-lg border border-purple-200 bg-purple-50 p-5">
+          <div className="rounded-lg border-2 border-purple-700 bg-purple-50 p-5 shadow-[3px_3px_0px_0px_rgb(88,28,135)]">
             <p className="text-sm font-semibold text-purple-800 mb-3">
               You've unlocked {newlyUnlockedQuestions.length} new Question Bank question
               {newlyUnlockedQuestions.length > 1 ? "s" : ""}:
@@ -183,7 +183,7 @@ export default function UnitCompletePage({ loaderData }: Route.ComponentProps) {
         )}
 
         {/* ── Guiding content ──────────────────────────────────────────── */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 flex flex-col gap-2">
+        <div className="rounded-lg border-2 border-gray-500 bg-white p-5 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-2">
           <p className="text-sm text-gray-700 leading-relaxed">
             Every time you complete a prep-unit, there will be more questions in Question Bank
             available for you to practice applying what you have learnt. These questions become
@@ -206,13 +206,13 @@ export default function UnitCompletePage({ loaderData }: Route.ComponentProps) {
         <div className="flex gap-3">
           <Link
             to="/question-bank"
-            className="flex-1 rounded-lg border border-purple-300 bg-white px-4 py-3 text-center text-sm font-semibold text-purple-700 hover:bg-purple-50 transition-colors"
+            className="flex-1 rounded-lg border-2 border-gray-500 bg-white px-4 py-3 text-center text-sm font-bold text-purple-700 shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Go to Question Bank
           </Link>
           <Link
             to="/dashboard"
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="flex-1 rounded-lg bg-blue-600 border-2 border-gray-500 px-4 py-3 text-center text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Next Unit →
           </Link>

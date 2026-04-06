@@ -146,7 +146,7 @@ type QuestionRow = {
 function QuestionCard({ question }: { question: QuestionRow }) {
   // Base styles shared by all three states
   const base =
-    "rounded-lg border p-4 flex items-start justify-between gap-3 transition-colors";
+    "rounded-lg border-2 p-4 flex items-start justify-between gap-3 transition-colors";
 
   // Inner content is the same for all states — only the wrapper changes.
   const inner = (
@@ -157,10 +157,10 @@ function QuestionCard({ question }: { question: QuestionRow }) {
         <span
           className={
             question.state === "attempted"
-              ? "text-xs font-semibold text-purple-600 uppercase tracking-wide"
+              ? "text-xs font-black text-purple-600 uppercase tracking-widest"
               : question.state === "unlocked"
-              ? "text-xs font-semibold text-purple-500 uppercase tracking-wide"
-              : "text-xs font-semibold text-gray-400 uppercase tracking-wide"
+              ? "text-xs font-black text-purple-500 uppercase tracking-widest"
+              : "text-xs font-black text-gray-400 uppercase tracking-widest"
           }
         >
           {question.state === "attempted" && "Attempted"}
@@ -200,7 +200,7 @@ function QuestionCard({ question }: { question: QuestionRow }) {
     return (
       <Link
         to={`/question-bank/${question.questionId}`}
-        className={`${base} border-purple-300 bg-purple-50 hover:bg-purple-100 cursor-pointer`}
+        className={`${base} border-purple-500 bg-purple-50 shadow-[3px_3px_0px_0px_rgba(88,28,135,0.5)] hover:shadow-[1px_1px_0px_0px_rgba(88,28,135,0.5)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer`}
       >
         {inner}
       </Link>
@@ -210,7 +210,7 @@ function QuestionCard({ question }: { question: QuestionRow }) {
   // Locked: plain div, not interactive (AC-4.8)
   return (
     <div
-      className={`${base} border-gray-200 bg-gray-50 opacity-60 cursor-default`}
+      className={`${base} border-gray-400 bg-gray-50 opacity-60 cursor-default`}
     >
       {inner}
     </div>
@@ -237,15 +237,42 @@ export default function QuestionBankPage({ loaderData }: Route.ComponentProps) {
   const { questions } = loaderData;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="min-h-screen bg-stone-50 p-6">
+      <div className="max-w-3xl mx-auto flex flex-col gap-6">
 
         {/* ── Header ───────────────────────────────────────────────────── */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Question Bank</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Free practice on unlocked questions
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-extrabold text-gray-900">Question Bank</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Free practice on unlocked questions
+            </p>
+          </div>
+          <Link
+            to="/dashboard"
+            className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors shrink-0 mt-1"
+          >
+            ← Dashboard
+          </Link>
+        </div>
+
+        {/* ── How it works ─────────────────────────────────────────────── */}
+        <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-3">
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400">How it works</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold text-gray-900">Unlocking —</span>{" "}
+              Each question unlocks after you complete the corresponding prep-unit. Locked questions show a preview so you know what's coming.
+            </p>
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold text-gray-900">Writing —</span>{" "}
+              Click any unlocked question to write a full IELTS essay. There's no time limit here — take as long as you need.
+            </p>
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold text-gray-900">Feedback —</span>{" "}
+              Once you submit, your essay is sent to your teacher for review. You can attempt the same question multiple times.
+            </p>
+          </div>
         </div>
 
         {/* ── Question list ────────────────────────────────────────────── */}
@@ -271,13 +298,6 @@ export default function QuestionBankPage({ loaderData }: Route.ComponentProps) {
           </p>
         )}
 
-        {/* ── Back link ────────────────────────────────────────────────── */}
-        <Link
-          to="/dashboard"
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          ← Back to Dashboard
-        </Link>
 
       </div>
     </div>

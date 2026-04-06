@@ -91,10 +91,9 @@ export async function loader(args: Route.LoaderArgs) {
 
   // completedCount drives the Question Bank lock state — computed once here
   const completedCount = units.filter((u) => u.status === "complete").length;
-  const tierLabel = path.tier === "tier_50" ? "50-Unit Path" : "80-Unit Path";
 
   // The component receives only this clean payload — no raw Prisma objects
-  return { tierLabel, units, completedCount };
+  return { units, completedCount };
 }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -120,13 +119,13 @@ type Unit = {
 function UnitCard({ unit }: { unit: Unit }) {
   // Shared base styles for all three states
   const cardBase =
-    "rounded-lg border p-4 flex flex-col gap-1 transition-colors";
+    "rounded-lg border-2 p-4 flex flex-col gap-1 transition-all";
 
   // Inner content is the same regardless of state — only the wrapper changes
   const cardContent = (
     <>
       {/* Unit number — e.g. "Unit 1", "Unit 14" */}
-      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <span className="text-xs font-black uppercase tracking-widest text-gray-400">
         Unit {unit.unitNumber}
       </span>
 
@@ -140,7 +139,7 @@ function UnitCard({ unit }: { unit: Unit }) {
         className={cn(
           "text-xs mt-1",
           unit.status === "complete" && "text-green-600",
-          unit.status === "in_progress" && "text-blue-600 font-semibold",
+          unit.status === "in_progress" && "text-blue-600 font-bold",
           unit.status === "locked" && "text-gray-400"
         )}
       >
@@ -159,7 +158,7 @@ function UnitCard({ unit }: { unit: Unit }) {
         to={`/unit/${unit.unitId}`}
         className={cn(
           cardBase,
-          "border-blue-300 bg-blue-50 hover:bg-blue-100 cursor-pointer"
+          "border-blue-700 bg-blue-50 cursor-pointer shadow-[3px_3px_0px_0px_rgb(29,78,216)] hover:shadow-[1px_1px_0px_0px_rgb(29,78,216)] hover:translate-x-[1px] hover:translate-y-[1px]"
         )}
       >
         {cardContent}
@@ -172,7 +171,7 @@ function UnitCard({ unit }: { unit: Unit }) {
       <div
         className={cn(
           cardBase,
-          "border-green-200 bg-green-50 cursor-default"
+          "border-emerald-700 bg-emerald-50 cursor-default"
         )}
       >
         {cardContent}
@@ -185,7 +184,7 @@ function UnitCard({ unit }: { unit: Unit }) {
     <div
       className={cn(
         cardBase,
-        "border-gray-200 bg-gray-50 cursor-default opacity-60"
+        "border-gray-400 bg-gray-50 cursor-default opacity-60"
       )}
     >
       {cardContent}
@@ -200,7 +199,7 @@ function UnitCard({ unit }: { unit: Unit }) {
  */
 function UnitList({ units }: { units: Unit[] }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {units.map((unit) => (
         <UnitCard key={unit.unitId} unit={unit} />
       ))}
@@ -223,60 +222,70 @@ function QuestionBankEntry({ completedCount }: { completedCount: number }) {
     return (
       <Link
         to="/question-bank"
-        className="mt-6 block rounded-lg border border-purple-300 bg-purple-50 p-4 hover:bg-purple-100 transition-colors"
+        className="text-sm font-semibold text-purple-700 hover:text-purple-900 transition-colors"
       >
-        <p className="text-sm font-semibold text-purple-700">
-          Question Bank →
-        </p>
-        <p className="text-xs text-purple-500 mt-1">
-          Free practice on unlocked IELTS questions
-        </p>
+        Question Bank →
       </Link>
     );
   }
 
   return (
-    <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 opacity-60 cursor-default">
-      <p className="text-sm font-semibold text-gray-500">Question Bank</p>
-      <p className="text-xs text-gray-400 mt-1">
-        Unlocks after your first unit is complete
-      </p>
-    </div>
+    <p className="text-sm text-gray-400 cursor-default">
+      Question Bank — unlocks after your first unit
+    </p>
   );
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage({ loaderData }: Route.ComponentProps) {
-  const { tierLabel, units, completedCount } = loaderData;
+  const { units, completedCount } = loaderData;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-stone-50 p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-extrabold text-gray-900">
             Your Learning Path
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{tierLabel}</p>
+          <p className="text-sm text-gray-500 mt-1">{completedCount} of {units.length} units complete</p>
         </div>
 
-        {/* Guiding content banner */}
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 mb-6 flex flex-col gap-1">
-          <p className="text-sm font-semibold text-blue-800">
-            In each prep-unit, there are 3 steps:
-          </p>
-          <p className="text-sm text-blue-700">Step 1: Answer the question by yourself.</p>
-          <p className="text-sm text-blue-700">Step 2: Understand PoVs with practice questions.</p>
-          <p className="text-sm text-blue-700">Step 3: Answer the question again with what you have learnt.</p>
-          <p className="text-sm text-blue-600 mt-1">Your essay will be sent to your teacher to compare.</p>
+        {/* Two-column layout: units left, sidebar right */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+
+          {/* Left: Unit list */}
+          <div className="flex-1 min-w-0">
+            <UnitList units={units} />
+          </div>
+
+          {/* Right sidebar: guiding banner + Question Bank entry */}
+          <div className="lg:w-72 shrink-0 lg:sticky lg:top-[57px] flex flex-col gap-4">
+            {/* Guiding content banner */}
+            <div className="rounded-lg border-2 border-dashed border-gray-400 bg-white p-4 flex flex-col gap-3">
+              <p className="text-xs font-black uppercase tracking-widest text-gray-400">How prep-units work</p>
+              <ol className="flex flex-col gap-2">
+                <li className="flex gap-2 text-sm text-gray-700">
+                  <span className="font-black text-gray-400 shrink-0">1.</span>
+                  <span><span className="font-semibold text-gray-900">Answer cold</span> — write your essay before studying anything.</span>
+                </li>
+                <li className="flex gap-2 text-sm text-gray-700">
+                  <span className="font-black text-gray-400 shrink-0">2.</span>
+                  <span><span className="font-semibold text-gray-900">Study &amp; practise</span> — read the model essay and complete 10 exercises.</span>
+                </li>
+                <li className="flex gap-2 text-sm text-gray-700">
+                  <span className="font-black text-gray-400 shrink-0">3.</span>
+                  <span><span className="font-semibold text-gray-900">Answer again</span> — your teacher receives both essays to track your progress.</span>
+                </li>
+              </ol>
+            </div>
+
+            {/* Question Bank entry point — locked until first unit complete */}
+            <QuestionBankEntry completedCount={completedCount} />
+          </div>
+
         </div>
-
-        {/* Unit list — all units in sequence order */}
-        <UnitList units={units} />
-
-        {/* Question Bank entry point — locked until first unit complete */}
-        <QuestionBankEntry completedCount={completedCount} />
       </div>
     </div>
   );

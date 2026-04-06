@@ -2,6 +2,44 @@
 
 ---
 
+## Session 2026-04-06 (2) — Dashboard + Question Bank UI Polish — COMPLETE ✓
+
+**What was done:**
+- `dashboard.tsx` — two-column layout: unit grid left, sticky sidebar right (instruction box + QB nav)
+- Instruction box: dashed border + white bg (visually distinct from solid-border unit cards), numbered 3-step ol
+- QB nav button: replaced big purple card with plain text link — consistent with `← Dashboard` on QB page
+- Removed misleading tier label ("80-Unit Path"); replaced with live progress `{completedCount} of {units.length} units complete`
+- `question-bank.tsx` — neo-brutalism pass: bg-stone-50, max-w-3xl, font-extrabold header, border-2 cards, purple shadow + press effect on clickable cards, font-black badge labels
+- QB: "← Dashboard" moved to header row (right-aligned); removed from bottom
+- QB: "How it works" info card added — explains unlock logic, writing flow, teacher review
+
+**Files changed:** `app/routes/dashboard.tsx`, `app/routes/question-bank.tsx`
+
+**Debt:** none. typecheck: 0 errors.
+
+**Next step:** E2E visual review of dashboard + QB in browser; continue with any open features.
+
+---
+
+## Session 2026-04-06 — Visual + Copy Overhaul — COMPLETE ✓
+
+**Prior bugs resolved:** All 5 bugs from 2026-04-05 session resolved in commits
+`4c2df20` and `affd193`. No outstanding debt from prior session.
+
+**What was done:**
+- Terminology pass — PoV Encoding → "Understanding Perspectives", Essay Encoding → "Practice Questions", P2 — Applying → "Write Your Answer", Lexical Items → "Key Vocabulary", Syntax Patterns → "Sentence Structures", Recall cues → "Memory Hints", Peek → "View Essay", L1M Lexical Recognition → "Vocabulary Recognition", pov-encoding practice labels updated
+- Layout — pov-encoding + essay-encoding: two-column (content left, sticky sidebar right); p2: sticky header + two-column (writing left, timer/vocabulary/structures right); pov-intro: widened to max-w-4xl, PoV cards → 2-col grid; all other routes widened to max-w-3xl/4xl
+- Visual — soft neo-brutalism: bg-stone-50 background, border-2 border-gray-500 (softened from gray-900) on all cards, rgba offset shadows (50% opacity), press-effect buttons, font-black timers
+- Softened: all borders gray-900 → gray-500, all shadow colors at 50% opacity — text stays the focus
+
+**Files changed:** `app/routes/unit.$unitId.p1.pov-encoding.tsx`, `unit.$unitId.p1.essay-encoding.tsx`, `unit.$unitId.p1.pov-intro.tsx`, `unit.$unitId.p0.tsx`, `unit.$unitId.p0.intro.tsx`, `unit.$unitId.p2.tsx`, `unit.$unitId.p2.intro.tsx`, `unit-complete.$unitId.tsx`, `dashboard.tsx`, `app/components/ui/PeekModal.tsx`, `StopwatchTimer.tsx`, `CountdownTimer.tsx`, `MCQPractice.tsx`, `FillPractice.tsx`, `ScramblePractice.tsx`, `SentFillPractice.tsx`
+
+**Debt:** none introduced. typecheck: 0 errors.
+
+**Next step:** E2E visual review, then continue with any remaining open bugs or next feature.
+
+---
+
 ## Session 2026-04-05 — P1 Redesign — COMPLETE ✓
 
 **What was done:**

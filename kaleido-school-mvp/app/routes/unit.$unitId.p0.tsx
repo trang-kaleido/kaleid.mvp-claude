@@ -162,16 +162,19 @@ export default function P0ColdEssayPage({
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="min-h-screen bg-stone-50 p-6">
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-2xl font-extrabold text-gray-900">
             Cold Write
           </h1>
-          {/* CountdownTimer is a client component — counts from 40:00 to 00:00 */}
-          <CountdownTimer durationMinutes={40} />
+          <div className="flex items-center gap-3">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-400">Step 1 of 3</p>
+            {/* CountdownTimer is a client component — counts from 40:00 to 00:00 */}
+            <CountdownTimer durationMinutes={40} />
+          </div>
         </div>
 
         {/* ── IELTS Question ──────────────────────────────────────────── */}
@@ -179,8 +182,8 @@ export default function P0ColdEssayPage({
           The question is shown read-only in a styled box — not in the form.
           It provides context but is not editable or submitted.
         */}
-        <div className="rounded-lg border border-gray-300 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+        <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
             IELTS Task 2 Question
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">{question}</p>
@@ -195,16 +198,16 @@ export default function P0ColdEssayPage({
           <div className="flex flex-col gap-1">
             <label
               htmlFor="essay"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-bold text-gray-700"
             >
               Your Essay
             </label>
             <textarea
               id="essay"
               name="essay"
-              rows={16}
+              rows={20}
               placeholder="Write your IELTS Task 2 essay here..."
-              className="rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"
+              className="rounded-lg border-2 border-gray-500 bg-white p-3 text-sm text-gray-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]"
             />
           </div>
 
@@ -219,12 +222,14 @@ export default function P0ColdEssayPage({
             Submit button — AC-3.3 says it must remain enabled even after
             the timer expires. We never disable it.
           */}
-          <button
-            type="submit"
-            className="self-end rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            Submit Essay →
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="rounded-lg bg-blue-600 border-2 border-gray-500 px-6 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+            >
+              Submit Essay →
+            </button>
+          </div>
         </Form>
 
       </div>

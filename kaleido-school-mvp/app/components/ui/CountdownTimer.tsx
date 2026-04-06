@@ -68,7 +68,7 @@ export function CountdownTimer({ durationMinutes, onExpire }: CountdownTimerProp
   const display = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
   return (
-    <div className="font-mono text-lg font-semibold text-gray-700">
+    <div className="font-mono font-black text-2xl text-gray-900">
       {display}
     </div>
   );

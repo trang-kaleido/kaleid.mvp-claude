@@ -211,7 +211,7 @@ export function SentFillPractice({
       {currentQuestion.hint_sentences.length > 0 && (
         <div className="flex flex-col gap-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-            Recall cues
+            Memory Hints
           </p>
           {currentQuestion.hint_sentences.map((hint, i) => (
             <p key={i} className="text-xs text-gray-500 italic">

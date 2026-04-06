@@ -237,118 +237,137 @@ export default function P2ApplyingPage({
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="min-h-screen bg-stone-50">
 
-        {/* ── Header ──────────────────────────────────────────────────── */}
-        {/*
-          Deliberately simpler than P1's header:
-          - No Peek button (AC-3.22)
-          - No Pause toggle
-          - Just the phase label + countdown timer
-        */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">
-            P2 — Applying
+      {/* ── Sticky header ────────────────────────────────────────────── */}
+      {/*
+        Deliberately simpler than P1's header:
+        - No Peek button (AC-3.22)
+        - No Pause toggle
+      */}
+      <div className="sticky top-0 z-10 border-b-2 border-gray-500 bg-white px-6 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <h1 className="text-sm font-extrabold uppercase tracking-widest text-gray-900">
+            Write Your Answer
           </h1>
-          {/* CountdownTimer counts down from 40:00 to 00:00, no pause */}
-          <CountdownTimer durationMinutes={40} />
+          <p className="text-xs font-semibold text-gray-400">Step 3 of 3</p>
         </div>
+      </div>
 
-        {/* ── IELTS Question ──────────────────────────────────────────── */}
-        {/*
-          Same question as P0 (fetched from PrepUnit.question in the loader).
-          Displayed read-only — not inside the form, not editable.
-        */}
-        <div className="rounded-lg border border-gray-300 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-            IELTS Task 2 Question
-          </p>
-          <p className="text-sm text-gray-800 leading-relaxed">{question}</p>
-        </div>
+      {/* ── Two-column body ───────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8 items-start">
 
-        {/* ── Lexical Items Panel ─────────────────────────────────────── */}
-        {/*
-          Native <details> element — no JS state needed.
-          Starts collapsed (no `open` attribute).
-          Deduplication happened in the loader, so each phrase appears once.
-        */}
-        <details className="rounded-lg border border-gray-200 bg-white">
-          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none">
-            Lexical Items ({lexicalItems.length})
-          </summary>
-          <ul className="px-4 pb-3 flex flex-col gap-1">
-            {lexicalItems.map((item, i) => (
-              <li key={i} className="flex gap-2 items-baseline text-sm">
-                {/* The phrase itself — main item */}
-                <span className="font-medium text-gray-800">{item.phrase}</span>
-                {/* Part-of-speech tag — small, muted, uppercase */}
-                <span className="text-[10px] text-gray-400 uppercase tracking-wide">
-                  {item.pos}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
+        {/* LEFT — question + essay form */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
 
-        {/* ── Syntax Patterns Panel ───────────────────────────────────── */}
-        {/*
-          Same collapsible pattern as lexical items.
-          syntaxPatterns is a string array — each entry is one pattern description.
-        */}
-        <details className="rounded-lg border border-gray-200 bg-white">
-          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none">
-            Syntax Patterns ({syntaxPatterns.length})
-          </summary>
-          <ul className="px-4 pb-3 flex flex-col gap-1">
-            {syntaxPatterns.map((pattern, i) => (
-              <li key={i} className="text-sm text-gray-700">
-                {pattern}
-              </li>
-            ))}
-          </ul>
-        </details>
-
-        {/* ── Essay Form ──────────────────────────────────────────────── */}
-        <Form method="post" className="flex flex-col gap-4">
-          {/* Hidden field: captures the start time on the client side */}
-          <input type="hidden" name="startedAt" value={startedAt} />
-
-          {/* Essay textarea */}
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="essay"
-              className="text-sm font-medium text-gray-700"
-            >
-              Your Essay
-            </label>
-            <textarea
-              id="essay"
-              name="essay"
-              rows={16}
-              placeholder="Write your IELTS Task 2 essay here..."
-              className="rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"
-            />
+          {/* ── IELTS Question ──────────────────────────────────────── */}
+          {/*
+            Same question as P0 (fetched from PrepUnit.question in the loader).
+            Displayed read-only — not inside the form, not editable.
+          */}
+          <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
+              IELTS Task 2 Question
+            </p>
+            <p className="text-sm text-gray-800 leading-relaxed">{question}</p>
           </div>
 
-          {/* Inline validation error — shown only after a failed submission */}
-          {error && (
-            <p className="text-sm text-red-600" role="alert">
-              {error}
-            </p>
-          )}
+          {/* ── Essay Form ────────────────────────────────────────────── */}
+          <Form method="post" className="flex flex-col gap-4">
+            {/* Hidden field: captures the start time on the client side */}
+            <input type="hidden" name="startedAt" value={startedAt} />
 
+            {/* Essay textarea */}
+            <div className="flex flex-col gap-1">
+              <label
+                htmlFor="essay"
+                className="text-sm font-bold text-gray-700"
+              >
+                Your Essay
+              </label>
+              <textarea
+                id="essay"
+                name="essay"
+                rows={22}
+                placeholder="Write your IELTS Task 2 essay here..."
+                className="rounded-lg border-2 border-gray-500 bg-white p-3 text-sm text-gray-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]"
+              />
+            </div>
+
+            {/* Inline validation error — shown only after a failed submission */}
+            {error && (
+              <p className="text-sm text-red-600" role="alert">
+                {error}
+              </p>
+            )}
+
+            {/*
+              Submit button — always enabled (same rule as P0: AC-3.3 pattern).
+              The timer expiring does not disable submission.
+            */}
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="rounded-lg bg-blue-600 border-2 border-gray-500 px-6 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+              >
+                Submit Essay →
+              </button>
+            </div>
+          </Form>
+
+        </div>
+
+        {/* RIGHT SIDEBAR — timer + reference panels */}
+        <aside className="w-full lg:w-96 shrink-0 flex flex-col gap-4 lg:sticky lg:top-[57px]">
+
+          {/* Timer card */}
+          <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] flex flex-col items-center gap-1">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-500">Time Remaining</p>
+            {/* CountdownTimer counts down from 40:00 to 00:00, no pause */}
+            <CountdownTimer durationMinutes={40} />
+          </div>
+
+          {/* Key Vocabulary accordion */}
           {/*
-            Submit button — always enabled (same rule as P0: AC-3.3 pattern).
-            The timer expiring does not disable submission.
+            Native <details> element — no JS state needed.
+            Deduplication happened in the loader, so each phrase appears once.
           */}
-          <button
-            type="submit"
-            className="self-end rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            Submit Essay →
-          </button>
-        </Form>
+          <details className="rounded-lg border-2 border-gray-500 bg-white shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-gray-900 select-none">
+              Key Vocabulary ({lexicalItems.length})
+            </summary>
+            <ul className="px-4 pb-3 flex flex-col gap-1">
+              {lexicalItems.map((item, i) => (
+                <li key={i} className="flex gap-2 items-baseline text-sm">
+                  {/* The phrase itself — main item */}
+                  <span className="font-medium text-gray-800">{item.phrase}</span>
+                  {/* Part-of-speech tag — small, muted, uppercase */}
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+                    {item.pos}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+
+          {/* Sentence Structures accordion */}
+          {/*
+            syntaxPatterns is a string array — each entry is one pattern description.
+          */}
+          <details className="rounded-lg border-2 border-gray-500 bg-white shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-gray-900 select-none">
+              Sentence Structures ({syntaxPatterns.length})
+            </summary>
+            <ul className="px-4 pb-3 flex flex-col gap-1">
+              {syntaxPatterns.map((pattern, i) => (
+                <li key={i} className="text-sm text-gray-700">
+                  {pattern}
+                </li>
+              ))}
+            </ul>
+          </details>
+
+        </aside>
 
       </div>
     </div>

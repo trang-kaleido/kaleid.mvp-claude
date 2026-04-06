@@ -329,8 +329,8 @@ function PovEncodingRenderer({
   }
 
   const practiceLabel: Record<string, string> = {
-    L3M_POV: "PoV Paragraph Matching",
-    L2M_POV: "PoV Sentence Matching",
+    L3M_POV: "Perspective Paragraph Matching",
+    L2M_POV: "Perspective Sentence Matching",
   };
 
   return (
@@ -368,44 +368,40 @@ export default function PovEncodingPage({ loaderData }: Route.ComponentProps) {
   const [peekOpen, setPeekOpen] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
 
-      {/* ── Sticky header ────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <h1 className="text-sm font-bold text-gray-900">PoV Encoding</h1>
+      {/* ── Sticky header — controls only ──────────────────────────── */}
+      <div className="sticky top-0 z-10 border-b-2 border-gray-500 bg-white px-6 py-3">
+        <div className="flex items-center justify-end gap-3">
+          {initialSeconds !== null && (
+            <StopwatchTimer isPaused={isPaused} initialSeconds={initialSeconds} />
+          )}
 
-          <div className="flex items-center gap-3">
-            {initialSeconds !== null && (
-              <StopwatchTimer isPaused={isPaused} initialSeconds={initialSeconds} />
-            )}
+          <button
+            onClick={() => setIsPaused((prev) => !prev)}
+            className="rounded-lg border-2 border-gray-500 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+          >
+            {isPaused ? "▶ Resume" : "⏸ Pause"}
+          </button>
 
-            <button
-              onClick={() => setIsPaused((prev) => !prev)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              {isPaused ? "▶ Resume" : "⏸ Pause"}
-            </button>
-
-            <button
-              onClick={() => setPeekOpen(true)}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors"
-            >
-              Peek
-            </button>
-          </div>
+          <button
+            onClick={() => setPeekOpen(true)}
+            className="rounded-lg bg-blue-600 border-2 border-gray-500 px-3 py-1.5 text-xs font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+          >
+            View Essay
+          </button>
         </div>
       </div>
 
       {/* ── Paused overlay ────────────────────────────────────────────── */}
       {isPaused && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-gray-900/40">
-          <div className="rounded-xl bg-white px-8 py-6 text-center shadow-xl">
-            <p className="text-lg font-semibold text-gray-800 mb-2">Session Paused</p>
+          <div className="rounded-lg border-2 border-gray-500 bg-white px-8 py-6 text-center shadow-[5px_5px_0px_0px_rgba(17,24,39,0.5)]">
+            <p className="text-lg font-extrabold text-gray-900 mb-2">Session Paused</p>
             <p className="text-sm text-gray-500 mb-4">Your timer is paused.</p>
             <button
               onClick={() => setIsPaused(false)}
-              className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              className="rounded-lg bg-blue-600 border-2 border-gray-500 px-6 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
             >
               ▶ Resume
             </button>
@@ -413,15 +409,31 @@ export default function PovEncodingPage({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      {/* ── Main content ──────────────────────────────────────────────── */}
-      <div className="max-w-2xl mx-auto px-6 py-8">
-        <PovEncodingRenderer
-          unitId={unitId}
-          sentences={sentences}
-          povEncoding={povEncoding}
-          povCards={povCards}
-          isPaused={isPaused}
-        />
+      {/* ── Two-column body ───────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8 items-start">
+
+        {/* LEFT — practice content */}
+        <div className="flex-1 min-w-0">
+          <PovEncodingRenderer
+            unitId={unitId}
+            sentences={sentences}
+            povEncoding={povEncoding}
+            povCards={povCards}
+            isPaused={isPaused}
+          />
+        </div>
+
+        {/* RIGHT SIDEBAR */}
+        <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-[57px]">
+          <div className="rounded-lg border-2 border-gray-500 bg-white p-5 shadow-[4px_4px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-3">
+            <h1 className="text-xl font-extrabold text-gray-900">Understanding Perspectives</h1>
+            <p className="text-xs font-black uppercase tracking-widest text-gray-500">Step 2 of 3</p>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Read the model essay and answer questions about how different perspectives are expressed in the writing.
+            </p>
+          </div>
+        </aside>
+
       </div>
 
       {/* ── Peek Modal ────────────────────────────────────────────────── */}

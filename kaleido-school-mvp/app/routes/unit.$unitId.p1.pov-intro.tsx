@@ -111,14 +111,14 @@ export default function PovIntroPage({ loaderData }: Route.ComponentProps) {
   }, [unitId]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="min-h-screen bg-stone-50 p-6">
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
-        <h1 className="text-xl font-bold text-gray-900">PoV Introduction</h1>
+        <h1 className="text-2xl font-extrabold text-gray-900">Points of View</h1>
 
         {/* ── Guiding content ─────────────────────────────────────────── */}
-        <div className="rounded-lg border border-gray-200 bg-white p-5 flex flex-col gap-2">
+        <div className="rounded-lg border-2 border-gray-500 bg-white p-5 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-2">
           <p className="text-sm text-gray-700 leading-relaxed">
             PoVs are &quot;Point of View&quot;. There are many of them but we select the most
             reusable one for you. Try to understand the logic of the PoV itself as a
@@ -130,11 +130,11 @@ export default function PovIntroPage({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* ── PoV Cards ───────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           {povIntro.directions.map((direction) => (
             <div
               key={direction.direction_tag}
-              className="rounded-lg border border-gray-200 bg-white p-5 flex flex-col gap-3"
+              className="rounded-lg border-2 border-gray-500 bg-white p-5 shadow-[4px_4px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-3"
             >
               {/* Argument as heading + Dive Deep button */}
               <div className="flex items-start justify-between gap-4">
@@ -172,9 +172,9 @@ export default function PovIntroPage({ loaderData }: Route.ComponentProps) {
           <input type="hidden" name="intent" value="complete_pov_intro" />
           <button
             type="submit"
-            className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="rounded-lg bg-blue-600 border-2 border-gray-500 px-6 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
-            I have understood these PoVs — ready to study the essay →
+            I understand these perspectives — let's study the essay →
           </button>
         </Form>
 

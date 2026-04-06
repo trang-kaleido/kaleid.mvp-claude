@@ -104,7 +104,7 @@ function EssayPanel({ sentences }: { sentences: Sentence[] }) {
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               {paragraphLabel(paraType)}
             </p>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 flex flex-col gap-2">
+            <div className="rounded-lg border-2 border-gray-500 bg-white p-4 flex flex-col gap-2 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
               {parasentences.map((s) => (
                 <div key={s.sentence_id} className="relative group">
                   <p className="text-sm text-gray-800 leading-relaxed">
@@ -146,7 +146,7 @@ function PovPanel({ povCards }: { povCards: PovCard[] }) {
         {povCards.map((card) => (
           <div
             key={card.paragraphType}
-            className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2"
+            className="rounded-lg border-2 border-gray-500 bg-gray-50 p-4 space-y-2 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]"
           >
             {/* Paragraph label, e.g. "Body 1" */}
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -211,7 +211,7 @@ function LexicalPanel({ sentences }: { sentences: Sentence[] }) {
   return (
     <div className="space-y-4">
       <h3 className="font-semibold text-sm text-gray-500 uppercase tracking-wide">
-        Lexical Items
+        Key Vocabulary
       </h3>
       {nouns.length > 0 && (
         <div className="space-y-2">
@@ -280,9 +280,9 @@ export function PeekModal({ isOpen, onClose, sentences, povCards }: PeekModalPro
         max-h-[85vh]: cap height so it doesn't overflow on small screens.
         overflow-y-auto: the panel scrolls if content is taller than the modal.
       */}
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto border-2 border-gray-500 shadow-[6px_6px_0px_0px_rgba(17,24,39,0.5)]">
         <DialogHeader>
-          <DialogTitle>Peek — Model Essay</DialogTitle>
+          <DialogTitle>Model Essay</DialogTitle>
         </DialogHeader>
 
         {/* Three panels stacked vertically with a divider between each. */}

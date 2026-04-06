@@ -432,7 +432,7 @@ export function ScramblePractice({
                   setPlacedIndices((prev) => prev.filter((_, i) => i !== pos));
                 }}
                 disabled={lastResult !== null || isPaused}
-                className="rounded-full bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 transition-colors"
+                className="rounded-full border-2 border-blue-800 bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 transition-colors"
               >
                 {chips[chipIdx]} ✕
               </button>
@@ -450,7 +450,7 @@ export function ScramblePractice({
                 setPlacedIndices((prev) => [...prev, chipIdx]);
               }}
               disabled={lastResult !== null || isPaused}
-              className="rounded-full border border-gray-300 bg-white px-3 py-1 text-sm text-gray-800 hover:border-blue-400 hover:bg-blue-50 transition-colors"
+              className="rounded-full border-2 border-gray-800 bg-white px-3 py-1 text-sm text-gray-800 hover:border-blue-600 hover:bg-blue-50 transition-colors"
             >
               {chips[chipIdx]}
             </button>
@@ -516,10 +516,10 @@ export function ScramblePractice({
                   setPlacedIndices((prev) => [...prev, chunkIdx]);
                 }}
                 disabled={lastResult !== null || isPaused}
-                className={`rounded-lg border px-3 py-1 text-sm transition-colors ${
+                className={`rounded-lg border-2 px-3 py-1 text-sm transition-colors ${
                   chunk.is_lexical
-                    ? "border-emerald-400 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-medium"
-                    : "border-gray-300 bg-white text-gray-800 hover:border-blue-400 hover:bg-blue-50"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-medium"
+                    : "border-gray-800 bg-white text-gray-800 hover:border-blue-600 hover:bg-blue-50"
                 }`}
               >
                 {chunk.text}
@@ -588,8 +588,8 @@ export function ScramblePractice({
               }}
               className={`rounded-lg border p-3 text-sm leading-relaxed select-none transition-colors ${
                 lastResult !== null || isPaused
-                  ? "cursor-default border-gray-200 bg-gray-50 text-gray-500"
-                  : "cursor-grab active:cursor-grabbing border-gray-200 bg-white text-gray-800 hover:border-blue-300 hover:shadow-sm"
+                  ? "cursor-default border-2 border-gray-300 bg-gray-50 text-gray-500"
+                  : "cursor-grab active:cursor-grabbing border-2 border-gray-800 bg-white text-gray-800 hover:border-blue-600 hover:shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)]"
               }`}
             >
               <span className="mr-2 text-xs font-semibold text-gray-400">
@@ -620,7 +620,7 @@ export function ScramblePractice({
       </p>
 
       {/* ── Instruction prompt ──────────────────────────────────────────── */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
         <p className="text-sm font-medium text-gray-700">
           {practice.practice_code === "L1S" &&
             "Arrange the word chips to form the correct phrase:"}
@@ -644,7 +644,7 @@ export function ScramblePractice({
         <button
           onClick={handleSubmit}
           disabled={!canSubmit || isPaused}
-          className="self-end rounded-lg bg-gray-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="self-end rounded-lg bg-gray-900 border-2 border-gray-500 px-6 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Check →
         </button>
@@ -652,7 +652,7 @@ export function ScramblePractice({
 
       {/* ── Feedback area ──────────────────────────────────────────────── */}
       {lastResult === "wrong" && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 p-3">
+        <div className="flex items-center gap-2 rounded-lg border-2 border-red-500 bg-red-50 p-3">
           <span className="text-lg text-red-600 font-bold" aria-label="Incorrect">
             ✗
           </span>
@@ -661,7 +661,7 @@ export function ScramblePractice({
       )}
 
       {lastResult === "correct" && (
-        <div className="flex items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 p-3">
+        <div className="flex items-center justify-between rounded-lg border-2 border-emerald-500 bg-emerald-50 p-3">
           <div className="flex items-center gap-2">
             <span className="text-lg text-emerald-600 font-bold" aria-label="Correct">
               ✓
@@ -670,7 +670,7 @@ export function ScramblePractice({
           </div>
           <button
             onClick={handleAdvance}
-            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+            className="rounded-lg bg-emerald-600 border-2 border-gray-500 px-5 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Next →
           </button>
@@ -678,7 +678,7 @@ export function ScramblePractice({
       )}
 
       {lastResult === "forced" && (
-        <div className="flex flex-col gap-3 rounded-lg border border-orange-300 bg-orange-50 p-3">
+        <div className="flex flex-col gap-3 rounded-lg border-2 border-orange-400 bg-orange-50 p-3">
           <div className="flex items-center gap-2">
             <span
               className="text-lg text-orange-600 font-bold"
@@ -693,7 +693,7 @@ export function ScramblePractice({
           </div>
           <button
             onClick={handleAdvance}
-            className="self-end rounded-lg bg-orange-500 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+            className="self-end rounded-lg bg-orange-500 border-2 border-gray-500 px-5 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Continue →
           </button>

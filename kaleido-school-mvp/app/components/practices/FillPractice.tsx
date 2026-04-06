@@ -340,8 +340,8 @@ export function FillPractice({
     if (blanks.length === 0) return null;
 
     return (
-      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-3">
+      <div className="rounded-lg border-2 border-blue-400 bg-blue-50 p-4">
+        <p className="text-xs font-black uppercase tracking-widest text-blue-500 mb-3">
           Hints
         </p>
         <div className="flex flex-wrap gap-4">
@@ -394,7 +394,7 @@ export function FillPractice({
       </p>
 
       {/* ── Instruction prompt ──────────────────────────────────────────── */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
         <p className="text-sm leading-relaxed text-gray-800">
           {currentQuestion.prompt}
         </p>
@@ -405,7 +405,7 @@ export function FillPractice({
         Sorted by order so surrounding context appears in the correct position
         relative to the target sentence.
       */}
-      <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div className="flex flex-col gap-4 rounded-lg border-2 border-gray-500 bg-gray-50 p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)]">
         {[...currentQuestion.context]
           .sort((a, b) => a.order - b.order)
           .map((ctx) => renderContextLine(ctx))}
@@ -419,7 +419,7 @@ export function FillPractice({
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="self-end rounded-lg bg-gray-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="self-end rounded-lg bg-gray-900 border-2 border-gray-500 px-6 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Check →
         </button>
@@ -428,7 +428,7 @@ export function FillPractice({
       {/* ── Feedback area ──────────────────────────────────────────────────── */}
 
       {lastResult === "wrong" && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 p-3">
+        <div className="flex items-center gap-2 rounded-lg border-2 border-red-500 bg-red-50 p-3">
           <span className="text-lg text-red-600 font-bold" aria-label="Incorrect">
             ✗
           </span>
@@ -438,7 +438,7 @@ export function FillPractice({
       )}
 
       {lastResult === "correct" && (
-        <div className="flex items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 p-3">
+        <div className="flex items-center justify-between rounded-lg border-2 border-emerald-500 bg-emerald-50 p-3">
           <div className="flex items-center gap-2">
             <span className="text-lg text-emerald-600 font-bold" aria-label="Correct">
               ✓
@@ -447,7 +447,7 @@ export function FillPractice({
           </div>
           <button
             onClick={handleAdvance}
-            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+            className="rounded-lg bg-emerald-600 border-2 border-gray-500 px-5 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Next →
           </button>
@@ -455,7 +455,7 @@ export function FillPractice({
       )}
 
       {lastResult === "forced" && (
-        <div className="flex flex-col gap-3 rounded-lg border border-orange-300 bg-orange-50 p-3">
+        <div className="flex flex-col gap-3 rounded-lg border-2 border-orange-400 bg-orange-50 p-3">
           <div className="flex items-center gap-2">
             <span
               className="text-lg text-orange-600 font-bold"
@@ -470,7 +470,7 @@ export function FillPractice({
           </div>
           <button
             onClick={handleAdvance}
-            className="self-end rounded-lg bg-orange-500 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+            className="self-end rounded-lg bg-orange-500 border-2 border-gray-500 px-5 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,0.5)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Continue →
           </button>
