@@ -355,12 +355,14 @@ export default function PovEncodingPage({ loaderData }: Route.ComponentProps) {
   const { unitId, sentences, povEncoding, povCards } = loaderData;
 
   // Resume the P1 stopwatch from the elapsed time since pov-intro was entered.
-  const [initialSeconds] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
+  // Use useEffect (not lazy useState) — SSR runs the lazy initializer server-side
+  // where sessionStorage is unavailable, and React reuses the server state (0)
+  // during hydration even after the client mounts.
+  const [initialSeconds, setInitialSeconds] = useState<number | null>(null);
+  useEffect(() => {
     const stored = sessionStorage.getItem(`p1_start_${unitId}`);
-    if (!stored) return 0;
-    return Math.floor((Date.now() - Number(stored)) / 1000);
-  });
+    setInitialSeconds(stored ? Math.floor((Date.now() - Number(stored)) / 1000) : 0);
+  }, [unitId]);
 
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [peekOpen, setPeekOpen] = useState<boolean>(false);
@@ -374,7 +376,9 @@ export default function PovEncodingPage({ loaderData }: Route.ComponentProps) {
           <h1 className="text-sm font-bold text-gray-900">PoV Encoding</h1>
 
           <div className="flex items-center gap-3">
-            <StopwatchTimer isPaused={isPaused} initialSeconds={initialSeconds} />
+            {initialSeconds !== null && (
+              <StopwatchTimer isPaused={isPaused} initialSeconds={initialSeconds} />
+            )}
 
             <button
               onClick={() => setIsPaused((prev) => !prev)}
