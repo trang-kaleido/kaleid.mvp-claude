@@ -2,6 +2,41 @@
 
 ---
 
+## Session 2026-04-07 (2) — PoV Blog Pages + QB Perspectives Library — COMPLETE ✓
+
+**What was done:**
+- `app/content/pov-content.ts` (new) — 52-entry static content map keyed by `direction_tag`; exports `povContent`, `poleStyles`, `PovEntry` type
+- `app/routes/pov.$directionTag.tsx` (new) — `/pov/:directionTag` blog page; sections: Hook → Core Concept → How to Spot It → IELTS Examples; back nav via `?from=pov-intro&unitId=` or `?from=question-bank`
+- `app/routes.ts` — registered `route("pov/:directionTag", ...)`
+- `app/routes/unit.$unitId.p1.pov-intro.tsx` — Dive Deep button now links to internal `/pov/:directionTag`; enabled only when `povContent[direction_tag]` exists
+- `app/routes/question-bank.tsx` — two-column layout; left = sticky PoV Library panel (accumulated PoVs from studied units, de-dup'd by direction_tag, links to /pov/:directionTag); right = existing question list
+
+**Files changed:** `app/content/pov-content.ts` (new), `app/routes/pov.$directionTag.tsx` (new), `app/routes.ts`, `app/routes/question-bank.tsx`, `app/routes/unit.$unitId.p1.pov-intro.tsx`
+
+**Debt:** none. typecheck: 0 errors.
+
+**Next step:** E2E browser pass on PoV pages and QB library panel.
+
+---
+
+## Session 2026-04-07 — L2S Chunk Fixes + Drop L4S — COMPLETE ✓
+
+**What was done:**
+- `pipeline_3_v5.ipynb` — 3 L2S chunk-processing fixes: contiguous doc span for verb groups; merge standalone punctuation into adjacent chunks (was causing 75% of L2S grading failures); filter already-used tokens from Pass 3 subtree
+- `app/components/practices/ScramblePractice.tsx` — L4S (essay scramble) branch removed; types `PracticeEssayScramble`, `EssayScrambleVersion`, `ParagraphOpener` deleted
+- `app/routes/unit.$unitId.p1.essay-encoding.tsx` — L4S removed from render path
+- `LAB-SCHOOL-CONTRACT.md` — updated to 13 practices (L4S dropped; L1F/L2F/L4W shift to indices 11/12/13)
+- `features.json` — updated to reflect 13 practices
+- `pipeline_3_v4.ipynb` — deleted (superseded by v5)
+
+**Files changed:** `pipeline_3_v5.ipynb`, `ScramblePractice.tsx`, `unit.$unitId.p1.essay-encoding.tsx`, `LAB-SCHOOL-CONTRACT.md`, `features.json`
+
+**Debt:** none.
+
+**Next step:** Re-run pipeline_3_v5 against current DB to populate updated practices.
+
+---
+
 ## Session 2026-04-06 (2) — Dashboard + Question Bank UI Polish — COMPLETE ✓
 
 **What was done:**

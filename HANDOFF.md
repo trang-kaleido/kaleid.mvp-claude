@@ -1,9 +1,21 @@
 # HANDOFF — Kaleido MVP (Master)
 
-_Last updated: 2026-04-05_
+_Last updated: 2026-04-07_
 
 > **Start here.** This is the single entry point for any agent or session picking up this project.
 > Read this first, then follow the link to the workstream you're working on.
+
+---
+
+## Session 2026-04-07 — PoV Blog Pages + QB Library + L2S Fixes + Drop L4S
+
+**School workstream — all committed:**
+- L2S chunk grading fixed (3 pipeline bugs); L4S dropped from pipeline + School (13 practices total)
+- PoV blog pages: `/pov/:directionTag` route + 52-entry static content map
+- QB redesigned: two-column layout with sticky Perspectives Library (accumulated PoVs → Dive Deep links)
+- All 5 bugs from 2026-04-05 session resolved (commits `4c2df20`, `affd193`, `9a1234f`)
+
+**Next step:** E2E browser pass; RLS policies on Supabase; re-run pipeline_3_v5 against DB.
 
 ---
 
@@ -12,14 +24,14 @@ _Last updated: 2026-04-05_
 - `kaleido-school-mvp/app/routes/unit.$unitId.p2.tsx` — fixed `sentences` parsing: replaced raw cast with `safeParseJson<Sentence[]>()` (same pattern as all P1 routes); was crashing with "not iterable" then returning empty panels
 - Confirmed: E2E flow reaches P2 write page and panels now populate
 
-**Bugs / debt logged for next session:**
-- `[ ] ISSUE: time tracking` — stopwatch only starts at essay-encoding; should start from first screen of P1 (pov-intro or pov-encoding)
-- `[ ] Remove color coding from PeekModal` — color-code-by-POS display should be stripped
-- `[ ] Practice 8 (L1F phrase fill) display` — hint words shown inline with context sentence is confusing; needs redesign so hints are visually separated
-- `[ ] P2 intro copy` — current instruction text ("These questions are to help you deepen your understanding…") belongs to the pov-encoding gate, not p2/intro; p2/intro needs its own copy: "You've understood the PoV and the essay structure. Now try to answer the question again."
-- `[ ] Submission confirmation screen` — after P2 essay submit, show a screen confirming essay sent to teacher (before or instead of bare unit-complete redirect)
+**Bugs logged — all resolved in subsequent sessions:**
+- `[✅ affd193] ISSUE: time tracking` — stopwatch now initialised from sessionStorage set on pov-intro entry
+- `[✅ 4c2df20] Remove color coding from PeekModal` — POS color-coding stripped
+- `[✅ 4c2df20] Practice 8 (L1F phrase fill) display` — hints visually separated from context sentence
+- `[✅ 4c2df20] P2 intro copy` — corrected to "You've understood the PoV and the essay structure. Now try to answer the question again."
+- `[✅ 4c2df20] Submission confirmation screen` — confirmation screen added after P2 essay submit
 
-**Next step:** pick up any of the above bugs, or continue E2E testing through unit-complete screen.
+**Resolved.**
 
 ---
 

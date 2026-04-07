@@ -1,42 +1,58 @@
 /**
  * question-bank — Question Bank Home (F14)
  *
- * Lists all Q Bank questions for the student's tier in three states:
- *   - attempted  (purple, clickable) — student has submitted at least one free_practice essay
- *   - unlocked   (purple, clickable) — sequence position reached, no attempt yet
- *   - locked     (grey, not clickable) — student hasn't reached the unlock position yet
- *
- * Access logic:
- *   effectivePosition = currentSequencePosition ?? tier max (50 or 80)
- *   When the path is complete (currentSequencePosition = null), ALL questions count as unlocked.
+ * Two-column layout:
+ *   Left  — "Perspectives Library": all PoVs accumulated by the student
+ *            (from units where they have passed pov-intro).
+ *            Each card links to /pov/:directionTag.
+ *   Right — Question list (attempted / unlocked / locked).
  *
  * Acceptance criteria covered: AC-4.8, AC-4.9, AC-4.10, AC-4.11
  */
 import { redirect, Link } from "react-router";
 import { requireStudent } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
+import { safeParseJson } from "~/lib/json.server";
+import { povContent, poleStyles } from "~/content/pov-content";
+import type { Pole } from "~/content/pov-content";
 import type { Route } from "./+types/question-bank";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type QuestionRow = {
+  questionId: string;
+  displayText: string;
+  unlockedBySequencePosition: number;
+  state: "attempted" | "unlocked" | "locked";
+  attemptCount: number;
+};
+
+type StudiedPov = {
+  direction_tag: string;
+  argument: string;
+  poles: [Pole, Pole] | null; // available when content exists
+  hasContent: boolean;
+};
+
+// Minimal shape we need from the practices JSONB
+interface PovDirection {
+  direction_tag: string;
+  argument: string;
+}
+interface PovIntroPractice {
+  practice_code: "POV_INTRO";
+  directions: PovDirection[];
+}
+interface Practice {
+  practice_code: string;
+  [key: string]: unknown;
+}
 
 // ─── Loader ──────────────────────────────────────────────────────────────────
 
-/**
- * Loader: fetches all QB questions and computes state (attempted/unlocked/locked)
- * for this student.
- *
- * Guard order:
- *   1. requireStudent → redirect /sign-in if not authenticated
- *   2. StudentPath must exist → redirect /onboarding/tier
- *
- * Server-side derivations (so the component just renders):
- *   - effectivePosition: handles the "path complete" case where null means all unlocked
- *   - state: 'attempted' | 'unlocked' | 'locked' per question
- *   - displayText: full text for unlocked, first 8 words + "…" for locked (AC-4.9)
- */
 export async function loader(args: Route.LoaderArgs) {
-  // Step 1: authenticate. Returns Clerk user ID string.
   const clerkUserId = await requireStudent(args);
 
-  // Step 2: load the student's path — we need batchId, tier, and sequence position.
   const path = await prisma.studentPath.findUnique({
     where: { clerkUserId },
     select: {
@@ -48,70 +64,58 @@ export async function loader(args: Route.LoaderArgs) {
   });
 
   if (!path) {
-    // No StudentPath = onboarding not complete.
     throw redirect("/onboarding/tier");
   }
 
-  // Step 3: fetch ALL Q Bank questions for this student's batch + tier,
-  // ordered by when they unlock so the list flows from earliest → latest.
-  const qbankQuestions = await prisma.qBankUnlocks.findMany({
-    where: { batchId: path.batchId, tier: path.tier },
-    orderBy: { unlockedBySequencePosition: "asc" },
-    select: {
-      questionId: true,
-      questionText: true,
-      unlockedBySequencePosition: true,
-    },
-  });
+  // Run questions query, attempt groupBy, and studied-units query in parallel.
+  const [qbankQuestions, attemptGroups, studiedProgress] = await Promise.all([
+    prisma.qBankUnlocks.findMany({
+      where: { batchId: path.batchId, tier: path.tier },
+      orderBy: { unlockedBySequencePosition: "asc" },
+      select: {
+        questionId: true,
+        questionText: true,
+        unlockedBySequencePosition: true,
+      },
+    }),
+    prisma.studentAttempt.groupBy({
+      by: ["qbankQuestionId"],
+      where: {
+        studentId: path.studentId,
+        artifactType: "free_practice",
+        qbankQuestionId: { not: null },
+      },
+      _count: { id: true },
+    }),
+    // Units where the student has passed the pov-intro screen
+    prisma.studentUnitProgress.findMany({
+      where: {
+        studentId: path.studentId,
+        NOT: { currentPhase: { in: ["p0", "p1_pov_intro", "p1"] } },
+        status: { not: "locked" },
+      },
+      select: { unitId: true },
+    }),
+  ]);
 
-  // Step 4: find which questions this student has already attempted.
-  // groupBy gives us one row per qbankQuestionId with a count of attempts.
-  // We only look at free_practice artifacts (QB writes, not unit attempts).
-  const attemptGroups = await prisma.studentAttempt.groupBy({
-    by: ["qbankQuestionId"],
-    where: {
-      studentId: path.studentId,
-      artifactType: "free_practice",
-      qbankQuestionId: { not: null },
-    },
-    _count: { id: true },
-  });
+  // ── Shape question data ────────────────────────────────────────────────────
 
-  // Build a Map so we can look up attempt counts in O(1).
-  // Key: questionId UUID string  →  Value: number of attempts
   const attemptMap = new Map(
     attemptGroups.map((a) => [a.qbankQuestionId!, a._count.id])
   );
 
-  // Step 5: compute the "effective" sequence position.
-  // When currentSequencePosition is null, the student has finished the entire path.
-  // In that case, all questions should appear as unlocked regardless of position,
-  // so we use the tier maximum (50 or 80) to guarantee every question passes the check.
   const effectivePosition =
-    path.currentSequencePosition ??
-    (path.tier === "tier_50" ? 50 : 80);
+    path.currentSequencePosition ?? (path.tier === "tier_50" ? 50 : 80);
 
-  // Step 6: shape each question into the form the component needs.
-  // We do all logic here — the component receives clean, pre-shaped data.
-  const questions = qbankQuestions.map((q) => {
+  const questions: QuestionRow[] = qbankQuestions.map((q) => {
     const isUnlocked = effectivePosition >= q.unlockedBySequencePosition;
     const attemptCount = attemptMap.get(q.questionId) ?? 0;
-
-    // Determine the display state:
-    //   attempted = unlocked + at least one submission
-    //   unlocked  = position reached, no submission yet
-    //   locked    = position not yet reached
     const state: "attempted" | "unlocked" | "locked" =
       attemptCount > 0 ? "attempted" : isUnlocked ? "unlocked" : "locked";
-
-    // For locked questions, truncate to first 8 words so the student gets
-    // a hint of what's coming without revealing the full question. (AC-4.9)
     const words = q.questionText.split(" ");
-    const displayText =
-      isUnlocked
-        ? q.questionText
-        : words.slice(0, 8).join(" ") + (words.length > 8 ? "…" : "");
-
+    const displayText = isUnlocked
+      ? q.questionText
+      : words.slice(0, 8).join(" ") + (words.length > 8 ? "…" : "");
     return {
       questionId: q.questionId,
       displayText,
@@ -121,39 +125,52 @@ export async function loader(args: Route.LoaderArgs) {
     };
   });
 
-  return { questions };
+  // ── Shape accumulated PoVs ─────────────────────────────────────────────────
+
+  const studiedPovs: StudiedPov[] = [];
+
+  if (studiedProgress.length > 0) {
+    const unitIds = studiedProgress.map((p) => p.unitId);
+
+    const prepUnits = await prisma.prepUnit.findMany({
+      where: { unitId: { in: unitIds } },
+      select: { practices: true },
+    });
+
+    const seen = new Set<string>();
+
+    for (const unit of prepUnits) {
+      const practices = safeParseJson<Practice[]>(unit.practices);
+      if (!practices || !practices[1]) continue;
+      const povIntro = practices[1] as unknown as PovIntroPractice;
+      if (!Array.isArray(povIntro.directions)) continue;
+
+      for (const dir of povIntro.directions) {
+        if (seen.has(dir.direction_tag)) continue;
+        seen.add(dir.direction_tag);
+        const entry = povContent[dir.direction_tag];
+        studiedPovs.push({
+          direction_tag: dir.direction_tag,
+          argument: dir.argument,
+          poles: entry ? entry.poles : null,
+          hasContent: !!entry,
+        });
+      }
+    }
+  }
+
+  return { questions, studiedPovs };
 }
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-// Shape of a single question row, derived from the loader return.
-type QuestionRow = {
-  questionId: string;
-  displayText: string;
-  unlockedBySequencePosition: number;
-  state: "attempted" | "unlocked" | "locked";
-  attemptCount: number;
-};
 
 // ─── QuestionCard ─────────────────────────────────────────────────────────────
 
-/**
- * QuestionCard — renders one row in the question list.
- *
- * Attempted and unlocked questions are clickable Links (AC-4.8, AC-4.10).
- * Locked questions are plain divs — no interaction, greyed out (AC-4.8).
- */
 function QuestionCard({ question }: { question: QuestionRow }) {
-  // Base styles shared by all three states
   const base =
     "rounded-lg border-2 p-4 flex items-start justify-between gap-3 transition-colors";
 
-  // Inner content is the same for all states — only the wrapper changes.
   const inner = (
     <>
-      {/* Left side: state badge + question text */}
       <div className="flex flex-col gap-1 flex-1 min-w-0">
-        {/* State badge — small coloured pill */}
         <span
           className={
             question.state === "attempted"
@@ -167,25 +184,21 @@ function QuestionCard({ question }: { question: QuestionRow }) {
           {question.state === "unlocked" && "Unlocked"}
           {question.state === "locked" && "Locked"}
         </span>
-
-        {/* Question text (full for unlocked, truncated for locked) */}
         <p className="text-sm text-gray-800 leading-relaxed">
           {question.displayText}
         </p>
-
-        {/* For locked questions: tell the student when this question unlocks */}
         {question.state === "locked" && (
           <p className="text-xs text-gray-400 mt-1">
-            Unlock after completing Prep-Unit {question.unlockedBySequencePosition}
+            Unlock after completing Prep-Unit{" "}
+            {question.unlockedBySequencePosition}
           </p>
         )}
       </div>
-
-      {/* Right side: attempt count (if any) + arrow for clickable states */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {question.state === "attempted" && (
           <span className="text-xs text-gray-500">
-            {question.attemptCount} {question.attemptCount === 1 ? "attempt" : "attempts"}
+            {question.attemptCount}{" "}
+            {question.attemptCount === 1 ? "attempt" : "attempts"}
           </span>
         )}
         {question.state !== "locked" && (
@@ -195,7 +208,6 @@ function QuestionCard({ question }: { question: QuestionRow }) {
     </>
   );
 
-  // Unlocked and attempted: render as a clickable Link
   if (question.state === "attempted" || question.state === "unlocked") {
     return (
       <Link
@@ -207,11 +219,61 @@ function QuestionCard({ question }: { question: QuestionRow }) {
     );
   }
 
-  // Locked: plain div, not interactive (AC-4.8)
   return (
-    <div
-      className={`${base} border-gray-400 bg-gray-50 opacity-60 cursor-default`}
-    >
+    <div className={`${base} border-gray-400 bg-gray-50 opacity-60 cursor-default`}>
+      {inner}
+    </div>
+  );
+}
+
+// ─── PovLibraryCard ───────────────────────────────────────────────────────────
+
+function PovLibraryCard({ pov }: { pov: StudiedPov }) {
+  const inner = (
+    <div className="flex flex-col gap-2">
+      {/* Pole badges */}
+      {pov.poles && (
+        <div className="flex gap-1.5 flex-wrap">
+          {pov.poles.map((pole) => (
+            <span
+              key={pole}
+              className={`${poleStyles[pole]} border border-gray-900 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest`}
+            >
+              {pole}
+            </span>
+          ))}
+        </div>
+      )}
+      {/* Argument */}
+      <p className="text-xs font-semibold text-gray-800 leading-snug">
+        {pov.argument}
+      </p>
+      {/* Dive Deep link or coming-soon label */}
+      {pov.hasContent ? (
+        <span className="text-[10px] font-black text-blue-600 uppercase tracking-wide">
+          Dive Deep →
+        </span>
+      ) : (
+        <span className="text-[10px] font-black text-gray-300 uppercase tracking-wide">
+          Content coming soon
+        </span>
+      )}
+    </div>
+  );
+
+  if (pov.hasContent) {
+    return (
+      <Link
+        to={`/pov/${pov.direction_tag}?from=question-bank`}
+        className="rounded border-2 border-gray-500 bg-white p-3 shadow-[2px_2px_0px_0px_rgba(17,24,39,0.4)] hover:shadow-none hover:translate-x-[1px] hover:translate-y-[1px] transition-all block"
+      >
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded border-2 border-gray-300 bg-white p-3 opacity-60">
       {inner}
     </div>
   );
@@ -219,28 +281,14 @@ function QuestionCard({ question }: { question: QuestionRow }) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-/**
- * QuestionBankPage — the QB home screen.
- *
- * Layout:
- *   ┌─ Header ────────────────────────────────────────────────────────────┐
- *   │  Question Bank                                                       │
- *   │  Free practice on unlocked questions                                │
- *   └─────────────────────────────────────────────────────────────────────┘
- *   ┌─ Question list ─────────────────────────────────────────────────────┐
- *   │  [attempted] Full text          3 attempts  →                       │
- *   │  [unlocked]  Full text                      →                       │
- *   │  [locked]    First 8 words…  Unlock after Unit N                   │
- *   └─────────────────────────────────────────────────────────────────────┘
- */
 export default function QuestionBankPage({ loaderData }: Route.ComponentProps) {
-  const { questions } = loaderData;
+  const { questions, studiedPovs } = loaderData;
 
   return (
     <div className="min-h-screen bg-stone-50 p-6">
-      <div className="max-w-3xl mx-auto flex flex-col gap-6">
+      <div className="max-w-6xl mx-auto flex flex-col gap-6">
 
-        {/* ── Header ───────────────────────────────────────────────────── */}
+        {/* ── Top header ──────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-gray-900">Question Bank</h1>
@@ -256,48 +304,83 @@ export default function QuestionBankPage({ loaderData }: Route.ComponentProps) {
           </Link>
         </div>
 
-        {/* ── How it works ─────────────────────────────────────────────── */}
-        <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-3">
-          <p className="text-xs font-black uppercase tracking-widest text-gray-400">How it works</p>
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold text-gray-900">Unlocking —</span>{" "}
-              Each question unlocks after you complete the corresponding prep-unit. Locked questions show a preview so you know what's coming.
-            </p>
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold text-gray-900">Writing —</span>{" "}
-              Click any unlocked question to write a full IELTS essay. There's no time limit here — take as long as you need.
-            </p>
-            <p className="text-sm text-gray-700">
-              <span className="font-semibold text-gray-900">Feedback —</span>{" "}
-              Once you submit, your essay is sent to your teacher for review. You can attempt the same question multiple times.
-            </p>
+        {/* ── Two-column layout ───────────────────────────────────────── */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+
+          {/* ── Left: PoV Library ──────────────────────────────────────── */}
+          <aside className="w-full lg:w-72 lg:flex-shrink-0 lg:sticky lg:top-6 flex flex-col gap-3">
+            <div className="rounded-lg border-2 border-gray-500 bg-white shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] overflow-hidden">
+              {/* Panel header */}
+              <div className="border-b-2 border-gray-500 px-4 py-3 bg-stone-50">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400">
+                  Perspectives Library
+                </p>
+                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                  {studiedPovs.length > 0
+                    ? `${studiedPovs.length} perspective${studiedPovs.length === 1 ? "" : "s"} studied`
+                    : "No perspectives yet"}
+                </p>
+              </div>
+
+              {/* PoV cards or empty state */}
+              <div className="p-3 flex flex-col gap-2 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto">
+                {studiedPovs.length > 0 ? (
+                  studiedPovs.map((pov) => (
+                    <PovLibraryCard key={pov.direction_tag} pov={pov} />
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-400 text-center py-6 leading-relaxed">
+                    Complete your first unit to see the perspectives you&apos;ve
+                    studied here.
+                  </p>
+                )}
+              </div>
+            </div>
+          </aside>
+
+          {/* ── Right: Questions ───────────────────────────────────────── */}
+          <div className="flex-1 flex flex-col gap-4 min-w-0">
+
+            {/* How it works */}
+            <div className="rounded-lg border-2 border-gray-500 bg-white p-4 shadow-[3px_3px_0px_0px_rgba(17,24,39,0.5)] flex flex-col gap-3">
+              <p className="text-xs font-black uppercase tracking-widest text-gray-400">
+                How it works
+              </p>
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold text-gray-900">Unlocking —</span>{" "}
+                  Each question unlocks after you complete the corresponding
+                  prep-unit. Locked questions show a preview so you know what's
+                  coming.
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold text-gray-900">Writing —</span>{" "}
+                  Click any unlocked question to write a full IELTS essay.
+                  There's no time limit here — take as long as you need.
+                </p>
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold text-gray-900">Feedback —</span>{" "}
+                  Once you submit, your essay is sent to your teacher for
+                  review. You can attempt the same question multiple times.
+                </p>
+              </div>
+            </div>
+
+            {/* Question list */}
+            <div className="flex flex-col gap-3">
+              {questions.map((q) => (
+                <QuestionCard key={q.questionId} question={q} />
+              ))}
+            </div>
+
+            {questions.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-8">
+                No questions available yet.
+              </p>
+            )}
+
           </div>
         </div>
-
-        {/* ── Question list ────────────────────────────────────────────── */}
-        {/*
-          Each question is rendered as a QuestionCard.
-          The loader already sorted by unlockedBySequencePosition (asc),
-          so attempted/unlocked questions appear before locked ones naturally.
-        */}
-        <div className="flex flex-col gap-3">
-          {questions.map((q) => (
-            <QuestionCard key={q.questionId} question={q} />
-          ))}
-        </div>
-
-        {/* ── Empty state ──────────────────────────────────────────────── */}
-        {/*
-          Shown only if the QB has no questions at all (e.g. data not ingested yet).
-          In normal operation this won't appear.
-        */}
-        {questions.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-8">
-            No questions available yet.
-          </p>
-        )}
-
 
       </div>
     </div>

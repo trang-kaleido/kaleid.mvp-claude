@@ -9,11 +9,12 @@
  * No StudentAttempt rows written — POV_INTRO has no pass tracking.
  */
 import { useEffect } from "react";
-import { redirect, Form } from "react-router";
+import { redirect, Form, Link } from "react-router";
 import { requireStudent } from "~/lib/auth.server";
 import { prisma } from "~/lib/prisma.server";
 import { PhaseTransitionService } from "~/services/phase-transition.server";
 import { safeParseJson } from "~/lib/json.server";
+import { povContent } from "~/content/pov-content";
 import type { Route } from "./+types/unit.$unitId.p1.pov-intro";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -142,15 +143,13 @@ export default function PovIntroPage({ loaderData }: Route.ComponentProps) {
                   {direction.argument}
                 </h2>
 
-                {direction.blog_url ? (
-                  <a
-                    href={direction.blog_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                {povContent[direction.direction_tag] ? (
+                  <Link
+                    to={`/pov/${direction.direction_tag}?from=pov-intro&unitId=${unitId}`}
                     className="shrink-0 rounded-lg border border-blue-300 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 transition-colors"
                   >
                     Dive deep →
-                  </a>
+                  </Link>
                 ) : (
                   <button
                     disabled

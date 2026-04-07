@@ -42,6 +42,9 @@ export default [
   route("question-bank", "routes/question-bank.tsx"),
   route("question-bank/:questionId", "routes/question-bank.$questionId.tsx"),
 
+  // PoV Dive Deep blog pages — static content, no auth required
+  route("pov/:directionTag", "routes/pov.$directionTag.tsx"),
+
   // Educator Console (F15)
   route("educator/students", "routes/educator.students.tsx"),
   route("educator/:studentId", "routes/educator.$studentId.tsx"),
