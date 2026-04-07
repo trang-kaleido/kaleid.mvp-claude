@@ -1,5 +1,19 @@
-import { Link } from "react-router";
+import { Link, redirect } from "react-router";
+import { getAuth, clerkClient } from "@clerk/react-router/server";
 import type { Route } from "./+types/home";
+
+export async function loader(args: Route.LoaderArgs) {
+  const { userId } = await getAuth(args);
+  if (!userId) return null;
+
+  const user = await clerkClient(args).users.getUser(userId);
+  const role = user.publicMetadata?.role as string | undefined;
+
+  if (role === "teacher") throw redirect("/educator/students");
+  if (role === "student") throw redirect("/dashboard");
+
+  return null;
+}
 
 export function meta({}: Route.MetaArgs) {
   return [
