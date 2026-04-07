@@ -1,16 +1,15 @@
 /**
  * unit.$unitId.p1.essay-encoding — Essay Encoding Sub-Route (F08/F09/F10)
  *
- * Handles 9 sequential practices from practices[4] to practices[12]:
+ * Handles 8 sequential practices from practices[4] to practices[11]:
  *   [4]  L4M — Essay-level MCQ
  *   [5]  L2M — Sentence-level MCQ
  *   [6]  L1M — Lexical-level MCQ
  *   [7]  L1S — Phrase Scramble (click-to-place)
  *   [8]  L2S — Sentence Scramble (click-to-place)
  *   [9]  L3S — Paragraph Scramble (drag-to-order)
- *   [10] L4S — Essay Scramble (drag-to-order)
- *   [11] L1F — Phrase Fill
- *   [12] L2F — Sentence Fill
+ *   [10] L1F — Phrase Fill
+ *   [11] L2F — Sentence Fill
  *
  * On completion: phase advances to p2 (via completeEssayEncoding).
  *
@@ -232,14 +231,14 @@ function PracticeRenderer({ practices, unitId, isPaused }: PracticeRendererProps
     completeFetcher.submit(formData, { method: "post" });
   }, [shouldComplete]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Essay encoding: practices[4] through practices[12] (9 practices total)
+  // Essay encoding: practices[4] through practices[11] (8 practices total)
   // practiceIndex 0 → practices[4] (L4M)
-  // practiceIndex 8 → practices[12] (L2F)
+  // practiceIndex 7 → practices[11] (L2F)
   const currentPractice = practices[practiceIndex + 4];
   const practiceCode = currentPractice?.practice_code;
 
   const MCQ_CODES = ["L4M", "L2M", "L1M"] as const;
-  const SCRAMBLE_CODES = ["L1S", "L2S", "L3S", "L4S"] as const;
+  const SCRAMBLE_CODES = ["L1S", "L2S", "L3S"] as const;
 
   const practiceLabel: Record<string, string> = {
     L4M: "Essay Structure",
@@ -248,7 +247,6 @@ function PracticeRenderer({ practices, unitId, isPaused }: PracticeRendererProps
     L1S: "Phrase Scramble",
     L2S: "Sentence Scramble",
     L3S: "Paragraph Scramble",
-    L4S: "Essay Scramble",
     L1F: "Phrase Fill",
     L2F: "Sentence Fill",
   };
@@ -264,8 +262,8 @@ function PracticeRenderer({ practices, unitId, isPaused }: PracticeRendererProps
       saveFetcher.submit(formData, { method: "post" });
     }
 
-    if (practiceIndex < 8) {
-      // 9 practices (indices 0–8), last is index 8
+    if (practiceIndex < 7) {
+      // 8 practices (indices 0–7), last is index 7
       setPracticeIndex((prev) => prev + 1);
     } else {
       setShouldComplete(true);
@@ -284,7 +282,7 @@ function PracticeRenderer({ practices, unitId, isPaused }: PracticeRendererProps
     <div className="flex flex-col gap-4">
 
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-        Practice {practiceIndex + 1} of 9 — {practiceLabel[practiceCode] ?? practiceCode}
+        Practice {practiceIndex + 1} of 8 — {practiceLabel[practiceCode] ?? practiceCode}
       </p>
 
       {MCQ_CODES.includes(practiceCode as (typeof MCQ_CODES)[number]) ? (
@@ -411,7 +409,7 @@ export default function EssayEncodingPage({ loaderData }: Route.ComponentProps) 
             <h1 className="text-xl font-extrabold text-gray-900">Practice Questions</h1>
             <p className="text-xs font-black uppercase tracking-widest text-gray-500">Step 2 of 3</p>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Work through 9 exercises on vocabulary, structure, and essay flow.
+              Work through 8 exercises on vocabulary, structure, and essay flow.
             </p>
           </div>
         </aside>

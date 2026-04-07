@@ -68,7 +68,7 @@
     {
       "id": "F09",
       "name": "Scramble practices",
-      "description": "L1S/L2S click-to-place word bank. L3S/L4S drag-to-order. Peek available. Pattern A per-arrangement retry. Same items reload on retry. After 3 failures: forced advance. Lives in /unit/:unitId/p1/essay-encoding (practices array indices 7–10).",
+      "description": "L1S/L2S click-to-place word bank. L3S drag-to-order. Peek available. Pattern A per-arrangement retry. Same items reload on retry. After 3 failures: forced advance. Lives in /unit/:unitId/p1/essay-encoding (practices array indices 7–9). L4S dropped.",
       "passes": true,
       "test_command": "npm test -- scramble"
     },

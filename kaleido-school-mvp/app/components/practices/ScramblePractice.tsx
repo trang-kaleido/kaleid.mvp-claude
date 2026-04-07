@@ -5,7 +5,6 @@
  *   L1S — word chips → phrase          } click-to-place word bank
  *   L2S — phrase chunks → sentence     }
  *   L3S — full sentences → paragraph   } drag-to-order list
- *   L4S — paragraph openers → essay    }
  *
  * RETRY CYCLE (identical to MCQPractice):
  *   attemptCount = 0  → show V1  (versions[0])
@@ -91,28 +90,11 @@ interface PracticeParaScramble {
   ];
 }
 
-// L4S — Essay Scramble
-interface ParagraphOpener {
-  paragraph: string;
-  text: string;
-}
-interface EssayScrambleVersion {
-  version: "V1" | "V2";
-  hint: string;
-  openers: ParagraphOpener[];
-  answer_order: string[];
-}
-interface PracticeEssayScramble {
-  practice_code: "L4S";
-  versions: [EssayScrambleVersion, EssayScrambleVersion];
-}
-
-/** Discriminated union of all 4 scramble practice types. */
+/** Discriminated union of all 3 scramble practice types. */
 export type ScramblePracticeData =
   | PracticeLexScramble
   | PracticeSentScramble
-  | PracticeParaScramble
-  | PracticeEssayScramble;
+  | PracticeParaScramble;
 
 /**
  * ScrambleAttemptRecord — one attempt on one scramble item.
@@ -161,14 +143,10 @@ function getInitialArrangement(
     // Click-to-place: start empty
     return [];
   }
+  // L3S: drag-to-order sentences within a paragraph
   const version = practice.versions[versionIndex];
-  if (practice.practice_code === "L3S") {
-    const q = (version as PracticeParaScramble["versions"][0]).questions[questionIndex];
-    return q?.sentences.map((s) => s.sentence_id) ?? [];
-  }
-  // L4S: version-level structure (no questions[] array)
-  const v = version as EssayScrambleVersion;
-  return v.openers.map((o) => o.paragraph);
+  const q = (version as PracticeParaScramble["versions"][0]).questions[questionIndex];
+  return q?.sentences.map((s) => s.sentence_id) ?? [];
 }
 
 /**
@@ -195,13 +173,9 @@ function gradeArrangement(
     const q = (version as PracticeSentScramble["versions"][0]).questions[questionIndex];
     return GradingService.gradeScrambleJoin(arranged, q.answer);
   }
-  if (practice.practice_code === "L3S") {
-    const q = (version as PracticeParaScramble["versions"][0]).questions[questionIndex];
-    return GradingService.gradeScrambleOrder(arranged, q.answer_order);
-  }
-  // L4S
-  const v = version as EssayScrambleVersion;
-  return GradingService.gradeScrambleOrder(arranged, v.answer_order);
+  // L3S
+  const q = (version as PracticeParaScramble["versions"][0]).questions[questionIndex];
+  return GradingService.gradeScrambleOrder(arranged, q.answer_order);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -251,18 +225,9 @@ export function ScramblePractice({
   const versionLabel: "V1" | "V2" = versionIndex === 0 ? "V1" : "V2";
   const currentVersion = practice.versions[versionIndex];
 
-  // Total questions differs by practice type.
-  // L4S has 1 arrangement task (no questions array); others have questions[].
-  const totalQuestions =
-    practice.practice_code === "L4S"
-      ? 1
-      : (currentVersion as { questions: unknown[] }).questions.length;
+  const totalQuestions = (currentVersion as { questions: unknown[] }).questions.length;
 
-  // Derive a stable item ID for the current position.
   const currentItemId = (() => {
-    if (practice.practice_code === "L4S") {
-      return `L4S-${versionLabel}`;
-    }
     const q = (currentVersion as { questions: Array<{ id: string }> }).questions[questionIndex];
     return q?.id ?? "";
   })();
@@ -534,20 +499,9 @@ export function ScramblePractice({
   // ── Render: drag-to-order (L3S, L4S) ─────────────────────────────────────────
 
   function renderDragToOrder() {
-    // Build a lookup map from id → display text for rendering.
-    const textMap = new Map<string, string>();
-    let hint = "";
-
-    if (practice.practice_code === "L3S") {
-      const q = (currentVersion as PracticeParaScramble["versions"][0]).questions[questionIndex];
-      q.sentences.forEach((s) => textMap.set(s.sentence_id, s.text));
-      hint = q.hint;
-    } else {
-      // L4S
-      const v = currentVersion as EssayScrambleVersion;
-      v.openers.forEach((o) => textMap.set(o.paragraph, o.text));
-      hint = v.hint;
-    }
+    const q = (currentVersion as PracticeParaScramble["versions"][0]).questions[questionIndex];
+    const textMap = new Map<string, string>(q.sentences.map((s) => [s.sentence_id, s.text]));
+    const hint = q.hint;
 
     return (
       <div className="flex flex-col gap-4">
@@ -605,8 +559,7 @@ export function ScramblePractice({
 
   // ── Main render ───────────────────────────────────────────────────────────────
 
-  const isClickToPlace =
-    practice.practice_code === "L1S" || practice.practice_code === "L2S";
+  const isClickToPlace = practice.practice_code === "L1S" || practice.practice_code === "L2S";
 
   // Submit is disabled for click-to-place when nothing is placed yet.
   const canSubmit = isClickToPlace ? placedIndices.length > 0 : true;
@@ -628,16 +581,13 @@ export function ScramblePractice({
             "Arrange the chunks to form the correct sentence:"}
           {practice.practice_code === "L3S" &&
             "Drag the sentences into the correct paragraph order:"}
-          {practice.practice_code === "L4S" &&
-            "Drag the paragraphs into the correct essay order:"}
         </p>
       </div>
 
       {/* ── Input area ─────────────────────────────────────────────────── */}
       {practice.practice_code === "L1S" && renderL1S()}
       {practice.practice_code === "L2S" && renderL2S()}
-      {(practice.practice_code === "L3S" || practice.practice_code === "L4S") &&
-        renderDragToOrder()}
+      {practice.practice_code === "L3S" && renderDragToOrder()}
 
       {/* ── Check button (only shown when awaiting input) ─────────────── */}
       {lastResult === null && (

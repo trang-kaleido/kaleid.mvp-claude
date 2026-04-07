@@ -358,19 +358,20 @@ export type Sentence = z.infer<typeof SentenceSchema>;
 
 ## 7. JSONB: `practices` Column
 
-Array of exactly **14 practice objects** in this fixed execution order:
+Array of exactly **13 practice objects** in this fixed execution order:
 
 ```
-Index:  0     1           2         3         4    5    6    7    8    9    10   11   12   13
-Code:   P0    POV_INTRO   L3M_POV   L2M_POV   L4M  L2M  L1M  L1S  L2S  L3S  L4S  L1F  L2F  L4W
+Index:  0     1           2         3         4    5    6    7    8    9    10   11   12
+Code:   P0    POV_INTRO   L3M_POV   L2M_POV   L4M  L2M  L1M  L1S  L2S  L3S  L1F  L2F  L4W
 ```
 
 **v3 change from v2:** 14 items (was 12). New items at indices 1–3. `L3M` from v2 is replaced by `L3M_POV`. `L3M` no longer exists as a `practice_code`.
+**L4S dropped:** Essay Scramble removed — was at index 10. L1F/L2F/L4W shift down one index. Array is now 13 items.
 
 |Category|`practice_code` values|Has `versions[]`?|Retry?|
 |---|---|---|---|
 |Unversioned|`P0`, `POV_INTRO`, `L2F`, `L4W`|No|No|
-|Versioned|`L3M_POV`, `L2M_POV`, `L4M`, `L2M`, `L1M`, `L1S`, `L2S`, `L3S`, `L4S`, `L1F`|Yes (V1, V2)|Yes — V1 → V2 → V1|
+|Versioned|`L3M_POV`, `L2M_POV`, `L4M`, `L2M`, `L1M`, `L1S`, `L2S`, `L3S`, `L1F`|Yes (V1, V2)|Yes — V1 → V2 → V1|
 
 ---
 
@@ -384,7 +385,6 @@ export type Practice =
   | PracticeLexScramble    // L1S
   | PracticeSentScramble   // L2S
   | PracticeParaScramble   // L3S
-  | PracticeEssayScramble  // L4S
   | PracticePhraseFill     // L1F
   | PracticeSentFill       // L2F
   | PracticeEssayWrite;    // L4W
@@ -400,7 +400,6 @@ export const PracticeSchema = z.discriminatedUnion("practice_code", [
   PracticeLexScrambleSchema,
   PracticeSentScrambleSchema,
   PracticeParaScrambleSchema,
-  PracticeEssayScrambleSchema,
   PracticePhraseFillSchema,
   PracticeSentFillSchema,
   PracticeEssayWriteSchema,
@@ -749,54 +748,7 @@ export const PracticeParaScrambleSchema = z.object({
 
 ---
 
-### 7.8 L4S — Essay Scramble (versioned)
-
-Unchanged from v2.
-
-```ts
-export interface ParagraphOpener {
-  paragraph: string;
-  text:      string;
-}
-
-export interface EssayScrambleVersion {
-  version:      "V1" | "V2";
-  hint:         string;
-  openers:      ParagraphOpener[];
-  answer_order: string[];
-}
-
-export interface PracticeEssayScramble {
-  practice_code: "L4S";
-  versions: [EssayScrambleVersion, EssayScrambleVersion];
-}
-```
-
-```ts
-const ParagraphOpenerSchema = z.object({
-  paragraph: z.string().min(1),
-  text:      z.string().min(1),
-});
-
-const EssayScrambleVersionSchema = z.object({
-  version:      z.enum(["V1", "V2"]),
-  hint:         z.string().min(1),
-  openers:      z.array(ParagraphOpenerSchema).min(2),
-  answer_order: z.array(z.string()).min(2),
-});
-
-export const PracticeEssayScrambleSchema = z.object({
-  practice_code: z.literal("L4S"),
-  versions: z.tuple([
-    EssayScrambleVersionSchema.extend({ version: z.literal("V1") }),
-    EssayScrambleVersionSchema.extend({ version: z.literal("V2") }),
-  ]),
-});
-```
-
----
-
-### 7.9 L1F — Phrase Fill (versioned)
+### 7.8 L1F — Phrase Fill (versioned)
 
 Unchanged from v2.
 
