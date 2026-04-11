@@ -2,6 +2,42 @@
 
 ---
 
+## Session 2026-04-11 — Sign-In Redirect Debug + Railway Build Noise — COMPLETE ✓
+
+**What happened:**
+- Investigated teacher not redirecting to `/educator/students` after sign-in
+- Root cause: user setup error in Clerk (role not set in `publicMetadata`) — code was always correct
+- 4 commits of noise created: `forceRedirectUrl="/"` on sign-in, `railway.toml` churn, Dockerfile COPY path reversals
+- Net useful outcome: `railway.toml` at repo root now forces Docker builder — build confirmed succeeding in Railway logs
+
+**Files changed:** `sign-in.tsx` (minor, harmless), `railway.toml` (root, new), `kaleido-school-mvp/railway.toml` (new)
+
+**Open issue:** Ghost students — Clerk-deleted users still appear in educator dashboard because their `StudentPath` rows persist in DB. Decided to defer fix.
+
+**Next step:** Smoke-test full user flow on `ielts.kaleido.study` (sign-up → onboarding → teacher code → dashboard).
+
+---
+
+## Session 2026-04-09 — Production Deployment — COMPLETE ✓
+
+**What was done:**
+- Railway deployment live at `ielts.kaleido.study` (custom domain, DNS pointed to Railway)
+- Created Clerk Production instance with `pk_live_*` / `sk_live_*` keys
+- Dockerfile fixed: added `npx prisma generate`, `EXPOSE 3000`, correct `CMD`
+- `.dockerignore` updated: excluded `.env`, `build/`, `.react-router/` from image
+- `.env.example` expanded: added `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DIRECT_URL`, `ARCJET_ENV`
+- Railway env vars set: `DATABASE_URL`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `NODE_ENV=production`
+- Clerk webhook configured at `https://ielts.kaleido.study/api/webhooks/clerk` (events: `user.created`, `user.updated`, `user.deleted`)
+- Clerk allowed origins + redirect URLs set to `ielts.kaleido.study`
+
+**Files changed:** `Dockerfile`, `.dockerignore`, `.env.example`
+
+**Debt:** Smoke-test checklist not yet verified (sign-up → onboarding → teacher code → dashboard flow; webhook 200 in Railway logs).
+
+**Next step:** Teacher account setup — sign up on `ielts.kaleido.study`, set `publicMetadata.role = "teacher"` in Clerk dashboard, get teacher code, share with beta users.
+
+---
+
 ## Session 2026-04-07 (2) — PoV Blog Pages + QB Perspectives Library — COMPLETE ✓
 
 **What was done:**
