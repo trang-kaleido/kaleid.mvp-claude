@@ -11,12 +11,14 @@
  *   Keeping this component pure (no Prisma/server imports) makes it reusable
  *   across all 10 P1 practices without any database dependency.
  */
+import { Link } from "react-router";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { povContent } from "~/content/pov-content";
 
 // ─── Type Definitions ────────────────────────────────────────────────────────
 
@@ -158,15 +160,17 @@ function PovPanel({ povCards }: { povCards: PovCard[] }) {
             <p className="text-sm italic text-gray-600 border-l-2 border-gray-300 pl-3">
               "{card.topicSentence}"
             </p>
-            {/* Blog deep-dive link — opens in new tab, rel prevents tab hijacking */}
-            <a
-              href={`https://kaleido.io/blog/${card.blogSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
-            >
-              Deep-dive →
-            </a>
+            {/* Deep-dive link — only shown when static PoV content exists */}
+            {povContent[card.blogSlug] && (
+              <Link
+                to={`/pov/${card.blogSlug}?from=peek`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1"
+              >
+                Deep-dive →
+              </Link>
+            )}
           </div>
         ))}
       </div>
