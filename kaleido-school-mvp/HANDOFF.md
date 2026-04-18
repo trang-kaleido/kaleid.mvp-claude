@@ -2,6 +2,22 @@
 
 ---
 
+## Session 2026-04-13 — L2S Chunker Holistic Fix — COMPLETE ✓
+
+**What happened:**
+- Investigated L2S chip bugs: "genres like or", "from of ," — malformed chips in production
+- Root cause: multi-pass architecture in `_spacy_phrase_chunks` — Pass 1 claimed bare noun heads, Pass 3 built fragments from leftover prep tokens (e.g. "like" + "or" after "comedy"/"fantasy" were claimed)
+- Prior Fix 2/3/4 hot patches addressed symptoms, not the architecture — would break on any new sentence structure
+- Holistic fix: Pass 1 now claims full dependency subtree of each NC root (includes all prep modifiers). A subtree is always coherent by definition — eliminates fragmentation for any sentence structure. Pass 3 gets a pobj guard as safety net.
+
+**Files changed:** `kaleido-lab-mvp/lab-mvp-data-pipelines/pipeline_3_v5.ipynb` — Cell `cell-utils`, function `_spacy_phrase_chunks` (Pass 1 + Pass 3)
+
+**Debt:** Pipeline must be re-run in Colab to regenerate DB data. Test accounts' `content_version` in `student_path` must be updated to the new `BATCH_ID`.
+
+**Next step:** Run `pipeline_3_v5.ipynb` in Colab → update test account `content_version` → smoke-test L2S on `ielts.kaleido.study`.
+
+---
+
 ## Session 2026-04-11 — Sign-In Redirect Debug + Railway Build Noise — COMPLETE ✓
 
 **What happened:**
